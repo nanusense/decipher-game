@@ -44,28 +44,39 @@
     function trigger() {
       if (done) return;
       done = true;
-      var page = document.getElementById('page');
-      page.classList.add('shaking');
+      document.getElementById('page').classList.add('shaking');
       document.getElementById('goBtn').classList.add('show');
     }
 
-    /* mobile — accelerometer shake */
-    var lastAcc = null;
-    window.addEventListener('devicemotion', function (e) {
-      var a = e.accelerationIncludingGravity;
-      if (!a) return;
-      if (lastAcc) {
-        var dx = Math.abs(a.x - lastAcc.x);
-        var dy = Math.abs(a.y - lastAcc.y);
-        if (dx + dy > 30) trigger();
-      }
-      lastAcc = { x: a.x, y: a.y };
-    });
+    function startMotion() {
+      var lastAcc = null;
+      window.addEventListener('devicemotion', function (e) {
+        var a = e.accelerationIncludingGravity;
+        if (!a) return;
+        if (lastAcc) {
+          var dx = Math.abs(a.x - lastAcc.x);
+          var dy = Math.abs(a.y - lastAcc.y);
+          if (dx + dy > 25) trigger();
+        }
+        lastAcc = { x: a.x, y: a.y };
+      });
+    }
 
-    /* desktop — rapid back-and-forth mouse shake (requires 4 direction reversals) */
-    var lastX = null;
-    var lastDir = 0;
-    var reversals = [];
+    /* iOS 13+ requires permission request inside a user gesture */
+    if (typeof DeviceMotionEvent !== 'undefined' &&
+        typeof DeviceMotionEvent.requestPermission === 'function') {
+      document.body.addEventListener('click', function askOnce() {
+        DeviceMotionEvent.requestPermission().then(function (state) {
+          if (state === 'granted') startMotion();
+        }).catch(function () {});
+        document.body.removeEventListener('click', askOnce);
+      }, { once: true });
+    } else {
+      startMotion();
+    }
+
+    /* desktop — rapid back-and-forth mouse shake */
+    var lastX = null, lastDir = 0, reversals = [];
     document.addEventListener('mousemove', function (e) {
       if (lastX === null) { lastX = e.clientX; return; }
       var dx = e.clientX - lastX;
