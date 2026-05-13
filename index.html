@@ -38,7 +38,7 @@
       resumeBtn.classList.remove('hidden');
       progTxt.textContent = saved + ' LEVELS REACHED';
       resumeBtn.addEventListener('click', function () {
-        var next = LEVEL_URLS[saved + 1];
+        var next = LEVEL_URLS[saved];
         if (next) window.location.href = 'levels/' + next;
       });
     }
