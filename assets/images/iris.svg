@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160">
+  <!-- eyelid shape -->
+  <path d="M20 80 Q80 20 160 20 Q240 20 300 80 Q240 140 160 140 Q80 140 20 80 Z"
+        fill="#ffffff" stroke="#111111" stroke-width="2.5"/>
+  <!-- iris -->
+  <circle cx="160" cy="80" r="44" fill="#d4d4d4" stroke="#111111" stroke-width="2"/>
+  <!-- iris detail rings -->
+  <circle cx="160" cy="80" r="38" fill="none" stroke="#9ca3af" stroke-width="0.8" opacity="0.6"/>
+  <circle cx="160" cy="80" r="30" fill="none" stroke="#6b7280" stroke-width="0.6" opacity="0.5"/>
+  <!-- iris texture lines -->
+  <g stroke="#9ca3af" stroke-width="0.5" opacity="0.4">
+    <line x1="160" y1="36" x2="158" y2="50"/>
+    <line x1="178" y1="39" x2="173" y2="52"/>
+    <line x1="193" y1="48" x2="185" y2="58"/>
+    <line x1="202" y1="62" x2="191" y2="68"/>
+    <line x1="204" y1="80" x2="192" y2="80"/>
+    <line x1="202" y1="98" x2="191" y2="92"/>
+    <line x1="193" y1="112" x2="185" y2="102"/>
+    <line x1="178" y1="121" x2="173" y2="108"/>
+    <line x1="160" y1="124" x2="158" y2="110"/>
+    <line x1="142" y1="121" x2="147" y2="108"/>
+    <line x1="127" y1="112" x2="135" y2="102"/>
+    <line x1="118" y1="98" x2="129" y2="92"/>
+    <line x1="116" y1="80" x2="128" y2="80"/>
+    <line x1="118" y1="62" x2="129" y2="68"/>
+    <line x1="127" y1="48" x2="135" y2="58"/>
+    <line x1="142" y1="39" x2="147" y2="52"/>
+  </g>
+  <!-- pupil -->
+  <circle cx="160" cy="80" r="20" fill="#111111"/>
+  <!-- pupil highlight -->
+  <circle cx="153" cy="73" r="5" fill="#ffffff" opacity="0.6"/>
+  <circle cx="168" cy="85" r="2.5" fill="#ffffff" opacity="0.3"/>
+  <!-- eyelash hints top -->
+  <g stroke="#111111" stroke-width="1.5" stroke-linecap="round">
+    <line x1="100" y1="38" x2="97"  y2="28"/>
+    <line x1="120" y1="27" x2="119" y2="17"/>
+    <line x1="140" y1="21" x2="140" y2="11"/>
+    <line x1="160" y1="20" x2="160" y2="10"/>
+    <line x1="180" y1="21" x2="181" y2="11"/>
+    <line x1="200" y1="27" x2="202" y2="17"/>
+    <line x1="218" y1="37" x2="222" y2="28"/>
+  </g>
+</svg>

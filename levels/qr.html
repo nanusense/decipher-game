@@ -6,11 +6,23 @@
   <title>DECIPHER</title>
   <link rel="stylesheet" href="../style.css?v=3">
   <style>
-    #qrcode canvas, #qrcode img { display: block; }
-    .qr-wrap {
-      padding: 1rem; background: #fff;
-      border: 1px solid var(--border);
-      display: inline-block;
+    .eye-wrap {
+      width: 100%;
+      max-width: 300px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .eye-wrap img {
+      width: 100%;
+      display: block;
+    }
+    .hint-txt {
+      font-size: 0.65rem;
+      color: var(--border);
+      letter-spacing: 0.1em;
+      min-height: 1.2em;
     }
   </style>
 </head>
@@ -18,26 +30,30 @@
   <span class="badge">22</span>
   <a href="../index.html" class="home-link">HOME</a>
   <div class="page">
-    <h1 class="title">PORTAL</h1>
-    <div class="qr-wrap"><div id="qrcode"></div></div>
-    <p class="clue">A square holds a thousand doors.<br>Scan it.</p>
+    <div class="eye-wrap" id="eyeWrap">
+      <img src="../assets/images/iris.svg" alt="an eye" draggable="true">
+    </div>
+    <p class="clue">Look before you save.</p>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="hint-txt" id="hint"></p>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(22);
 
-    /* If arriving via QR scan with ?portal=open, advance */
-    if (new URLSearchParams(location.search).get('portal') === 'open') {
-      completeLevel('query.html', 22);
-    } else {
-      var target = location.href.split('?')[0] + '?portal=open';
-      new QRCode(document.getElementById('qrcode'), {
-        text: target,
-        width: 180, height: 180,
-        colorDark: '#111111', colorLight: '#ffffff'
-      });
-    }
+    /* show a nudge after 20s of no progress */
+    var nudged = false;
+    setTimeout(function () {
+      if (!nudged) {
+        nudged = true;
+        document.getElementById('hint').textContent = 'try holding it';
+      }
+    }, 20000);
+
+    bindAnswer('ans', 'iris', 'query.html', 22);
   </script>
 </body>
 </html>
