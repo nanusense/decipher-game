@@ -54,7 +54,7 @@ body {
   position: fixed;
   top: 1.25rem;
   left: 1.5rem;
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   letter-spacing: 0.2em;
   color: var(--muted);
   z-index: 10;
@@ -64,7 +64,7 @@ body {
   position: fixed;
   top: 1.2rem;
   right: 1.5rem;
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   letter-spacing: 0.15em;
   color: var(--muted);
   text-decoration: none;
@@ -84,11 +84,11 @@ h1.title {
 
 /* ── Clue ── */
 .clue {
-  font-size: 0.85rem;
+  font-size: clamp(0.95rem, 3vw, 1.05rem);
   color: var(--muted);
   text-align: center;
   letter-spacing: 0.05em;
-  line-height: 1.75;
+  line-height: 1.8;
   max-width: 380px;
 }
 
@@ -105,12 +105,13 @@ h1.title {
   border: 1px solid var(--text);
   color: var(--text);
   font-family: var(--font);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   letter-spacing: 0.15em;
-  padding: 0.7rem 2rem;
+  padding: 0.8rem 2.2rem;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
 }
 .btn:hover, .btn:active { background: var(--text); color: var(--bg); }
 
@@ -323,7 +324,7 @@ canvas {
   color: var(--text);
 }
 .tagline {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   letter-spacing: 0.3em;
   color: var(--muted);
 }
@@ -332,4 +333,6 @@ canvas {
 @media (max-width: 400px) {
   .ws-cell { width: 28px; height: 28px; font-size: 0.7rem; }
   .simon-grid { width: 170px; height: 170px; }
+  .clue { font-size: 1rem; }
+  .btn  { font-size: 0.875rem; padding: 0.85rem 2rem; }
 }
