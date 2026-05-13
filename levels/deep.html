@@ -4,17 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DECIPHER</title>
-  <link rel="stylesheet" href="../style.css?v=3">
 </head>
 <body>
-  <script src="../utils.js?v=3"></script>
-  <script>
-    var saved = parseInt(localStorage.getItem('decipherProgress') || '0');
-    if (saved >= 13) {
-      completeLevel('level7.html', 14);
-    } else {
-      window.location.href = '../index.html';
-    }
-  </script>
+  <script>window.location.replace('../index.html');</script>
 </body>
 </html>

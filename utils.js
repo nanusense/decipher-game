@@ -22,8 +22,8 @@ var LEVEL_URLS = [
   'triple.html',    /* 11 — combination lock */
   'hunt.html',      /* 12 — catch the dot */
   'turn.html',      /* 13 — orientation */
-  'shallow.html',   /* 14 — URL word swap */
-  'level7.html',    /* 15 — URL number change */
+  'compass.html',   /* 14 — direction sequence */
+  'level15.html',   /* 15 — URL number change */
   'blind.html',     /* 16 — shake */
   'pattern.html',   /* 17 — dot pattern */
   'count.html',     /* 18 — exact count */

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER</title>
+  <link rel="stylesheet" href="../style.css?v=3">
+  <style>
+    .directions {
+      display: grid;
+      grid-template-columns: repeat(2, 80px);
+      gap: 14px;
+    }
+    .dir-btn {
+      width: 80px; height: 80px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      border-radius: 6px;
+      font-size: 1.2rem;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      font-family: var(--font);
+      color: var(--text);
+      transition: background 0.12s, border-color 0.12s, transform 0.08s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dir-btn:active { transform: scale(0.92); }
+    .dir-btn.active { border-color: var(--accent); background: rgba(37,99,235,0.06); }
+    .dir-btn.correct { border-color: var(--success); background: rgba(5,150,105,0.08); }
+    .dir-btn.wrong   { border-color: var(--danger);  background: rgba(220,38,38,0.08); }
+    .progress-dots { display: flex; gap: 8px; }
+    .pdot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border);
+      transition: background 0.2s;
+    }
+    .pdot.filled { background: var(--accent); }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%     { transform: translateX(-6px); }
+      75%     { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.3s ease; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 14</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page" style="gap:1.8rem">
+    <h1 class="title">FIND YOUR BEARING</h1>
+    <div class="directions" id="dirs">
+      <button class="dir-btn" data-dir="N">N</button>
+      <button class="dir-btn" data-dir="E">E</button>
+      <button class="dir-btn" data-dir="S">S</button>
+      <button class="dir-btn" data-dir="W">W</button>
+    </div>
+    <div class="progress-dots" id="dots">
+      <div class="pdot"></div>
+      <div class="pdot"></div>
+      <div class="pdot"></div>
+      <div class="pdot"></div>
+    </div>
+    <p class="clue">A before B before C.</p>
+  </div>
+  <script src="../utils.js?v=3"></script>
+  <script>
+    trackProgress(14);
+
+    var SEQUENCE = ['E', 'N', 'S', 'W']; /* alphabetical */
+    var step = 0;
+    var done = false;
+    var dots = document.querySelectorAll('.pdot');
+
+    document.querySelectorAll('.dir-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (done) return;
+        var dir = btn.dataset.dir;
+
+        if (dir === SEQUENCE[step]) {
+          btn.classList.add('active');
+          dots[step].classList.add('filled');
+          step++;
+
+          if (step === SEQUENCE.length) {
+            done = true;
+            document.querySelectorAll('.dir-btn').forEach(function (b) {
+              b.classList.remove('active');
+              b.classList.add('correct');
+            });
+            setTimeout(function () { completeLevel('level15.html', 14); }, 600);
+          }
+        } else {
+          /* wrong — shake and reset */
+          var dirsEl = document.getElementById('dirs');
+          dirsEl.classList.remove('shake');
+          void dirsEl.offsetWidth;
+          dirsEl.classList.add('shake');
+          document.querySelectorAll('.dir-btn').forEach(function (b) {
+            b.classList.remove('active');
+          });
+          dots.forEach(function (d) { d.classList.remove('filled'); });
+          step = 0;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
