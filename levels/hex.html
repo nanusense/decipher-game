@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 37</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .hex-code { font-size: 1.5rem; letter-spacing: 0.2em; color: var(--text); }
+    .hex-label { font-size: 0.6rem; color: var(--muted); letter-spacing: 0.15em; }
+    .clue-hex  { font-size: 0.68rem; color: var(--border); letter-spacing: 0.08em; font-style: italic; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 37</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">HEX</h1>
+    <div class="hex-code">46 4F 55 4E 44</div>
+    <p class="hex-label">HEX → ASCII</p>
+    <p class="clue-hex">"48 65 78 20 6d 65"</p>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">Convert each byte to its character.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(37);
+    /* 46=F 4F=O 55=U 4E=N 44=D → FOUND */
+    bindAnswer('ans', 'found', 'void.html', 37);
+  </script>
+</body>
+</html>

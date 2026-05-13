@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 22</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    #qrcode canvas, #qrcode img { display: block; }
+    .qr-wrap {
+      padding: 1rem; background: #fff;
+      border: 1px solid var(--border);
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 22</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">PORTAL</h1>
+    <div class="qr-wrap"><div id="qrcode"></div></div>
+    <p class="clue">A square holds a thousand doors.<br>Scan it.</p>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(22);
+
+    /* If arriving via QR scan with ?portal=open, advance */
+    if (new URLSearchParams(location.search).get('portal') === 'open') {
+      completeLevel('query.html', 22);
+    } else {
+      var target = location.href.split('?')[0] + '?portal=open';
+      new QRCode(document.getElementById('qrcode'), {
+        text: target,
+        width: 180, height: 180,
+        colorDark: '#111111', colorLight: '#ffffff'
+      });
+    }
+  </script>
+</body>
+</html>

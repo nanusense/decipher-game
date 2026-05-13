@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .btn-col { display: flex; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%; max-width: 200px; }
+    .intro { font-size: 0.8rem; color: var(--muted); text-align: center; line-height: 1.8; max-width: 340px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1 class="logo">DECIPHER</h1>
+    <p class="tagline">NO INSTRUCTIONS</p>
+    <div class="line"></div>
+    <p class="intro">
+      Each level is a puzzle hidden in the page itself.<br>
+      No questions. No multiple choice.<br>
+      Just you and your browser.
+    </p>
+    <div class="btn-col">
+      <button class="btn btn-accent" id="startBtn">START</button>
+      <button class="btn hidden" id="resumeBtn">RESUME</button>
+    </div>
+    <p style="font-size:0.65rem;color:var(--muted);letter-spacing:0.1em" id="progressTxt"></p>
+  </div>
+
+  <script src="utils.js"></script>
+  <script>
+    var saved = parseInt(localStorage.getItem('decipherProgress') || '0');
+    var startBtn  = document.getElementById('startBtn');
+    var resumeBtn = document.getElementById('resumeBtn');
+    var progTxt   = document.getElementById('progressTxt');
+
+    if (saved > 0) {
+      resumeBtn.classList.remove('hidden');
+      progTxt.textContent = saved + ' LEVELS REACHED';
+      resumeBtn.addEventListener('click', function () {
+        var next = LEVEL_URLS[saved + 1];
+        if (next) window.location.href = 'levels/' + next;
+      });
+    }
+
+    startBtn.addEventListener('click', function () {
+      window.location.href = 'levels/start.html';
+    });
+  </script>
+</body>
+</html>

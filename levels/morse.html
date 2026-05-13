@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 26</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .morse-line {
+      display: flex; gap: 0.4rem; align-items: center;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .morse-line + .morse-line { margin-top: 0.6rem; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--text); display: inline-block;
+    }
+    .dash {
+      width: 24px; height: 8px; border-radius: 4px;
+      background: var(--text); display: inline-block;
+    }
+    .gap { width: 16px; display: inline-block; }
+    .morse-letters {
+      display: flex; gap: 1.5rem; justify-content: center;
+      flex-wrap: wrap;
+    }
+    .morse-char { text-align: center; }
+    .morse-sym { font-size: 0.9rem; letter-spacing: 0.1em; color: var(--muted); }
+    .morse-ltr { font-size: 0.55rem; color: var(--border); letter-spacing: 0.1em; margin-top: 0.2rem; }
+    .key-table {
+      font-size: 0.6rem; color: var(--muted);
+      border-collapse: collapse; margin: 0 auto;
+    }
+    .key-table td { padding: 2px 8px; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 26</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">DOTS &amp; DASHES</h1>
+
+    <!-- R = ·–·   I = ··   S = ···   E = · -->
+    <div style="display:flex;flex-direction:column;gap:0.8rem;align-items:center">
+      <!-- R -->
+      <div class="morse-line">
+        <span class="dot"></span>
+        <span class="dash"></span>
+        <span class="dot"></span>
+        <span class="gap"></span>
+        <!-- I -->
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="gap"></span>
+        <!-- S -->
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="gap"></span>
+        <!-- E -->
+        <span class="dot"></span>
+      </div>
+    </div>
+
+    <table class="key-table">
+      <tr><td>·–·</td><td>= R</td><td>··</td><td>= I</td></tr>
+      <tr><td>···</td><td>= S</td><td>·</td><td>= E</td></tr>
+    </table>
+
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">Decode the signal.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(26);
+    bindAnswer('ans', 'rise', 'flip.html', 26);
+  </script>
+</body>
+</html>

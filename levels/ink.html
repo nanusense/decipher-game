@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 6</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .letter {
+      width: 100%; max-width: 360px;
+      background: #fffef9;
+      border: 1px solid #e8e4d8;
+      padding: 2rem 1.8rem;
+      font-size: 0.82rem;
+      line-height: 2;
+      color: #333;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      text-align: left;
+      position: relative;
+    }
+    .letter-heading {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+    }
+    .letter-sign {
+      margin-top: 1.2rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    ::selection { background: #bfdbfe; color: #333; }
+    .secret-word {
+      color: #333;
+      background: transparent;
+      border: none;
+      font-family: var(--font);
+      font-size: 0.82rem;
+      cursor: default;
+      pointer-events: none;
+      padding: 0;
+      user-select: text;
+      letter-spacing: inherit;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .secret-word.unlocked {
+      color: var(--accent);
+      cursor: pointer;
+      pointer-events: auto;
+      text-decoration: underline;
+    }
+    .secret-word::selection { background: #bfdbfe; color: var(--accent); font-weight: bold; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 6</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">INVISIBLE INK</h1>
+    <div class="letter">
+      <div class="letter-heading">TO WHOEVER FINDS THIS</div>
+      I could not say it plainly, so I hid it here —<br>
+      between these ordinary words, in plain sight.<br>
+      Not every word means what it seems.<br>
+      Read all of it. Every line. Every word.<br>
+      Once you find it, <button class="secret-word" id="secretBtn">proceed</button><br>
+      with confidence. You will know it when you see it.<br><br>
+      Hold this letter up to the light.
+      <div class="letter-sign">— A friend</div>
+    </div>
+    <p class="clue">Not all ink is equal.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(6);
+    var unlocked = false;
+    var btn = document.getElementById('secretBtn');
+
+    document.addEventListener('selectionchange', function () {
+      if (unlocked) return;
+      var sel = window.getSelection().toString().trim();
+      if (sel.length > 80) {
+        unlocked = true;
+        btn.classList.add('unlocked');
+      }
+    });
+
+    btn.addEventListener('click', function () {
+      if (unlocked) completeLevel('level7.html', 6);
+    });
+  </script>
+</body>
+</html>

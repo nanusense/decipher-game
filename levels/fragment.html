@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 24</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .frag-hint {
+      font-size: 0.78rem; background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem; color: var(--muted);
+      word-break: break-all; line-height: 1.6; max-width: 340px;
+    }
+    .frag-hint em { color: var(--accent); font-style: normal; }
+    .pieces {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;
+      font-size: 0.75rem; color: var(--muted); letter-spacing: 0.1em;
+    }
+    .piece { padding: 0.3rem 0.6rem; border: 1px solid var(--border); }
+    .piece.lit { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 24</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">FRAGMENT</h1>
+    <div class="pieces">
+      <span class="piece">nothing</span>
+      <span class="piece">lost</span>
+      <span class="piece lit">forward</span>
+      <span class="piece">void</span>
+      <span class="piece">end</span>
+    </div>
+    <div class="frag-hint">…/fragment.html<em>#forward</em></div>
+    <p class="clue">Pieces of the truth lie in fragments.<br>Change the # in the address bar.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(24);
+    function check() {
+      if (location.hash === '#forward') completeLevel('mirror.html', 24);
+    }
+    window.addEventListener('hashchange', check);
+    check();
+  </script>
+</body>
+</html>

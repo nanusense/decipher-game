@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 38</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .field {
+      width: 300px; height: 220px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      position: relative;
+    }
+    /* single 1×1 pixel slightly off-white — nearly invisible hint */
+    .field::after {
+      content: '';
+      position: absolute;
+      top: 44px; right: 52px;
+      width: 2px; height: 2px;
+      background: #d0d0d0;
+    }
+    .invisible-btn {
+      position: absolute;
+      top: 36px; right: 40px;
+      width: 28px; height: 28px;
+      background: transparent;
+      border: none; cursor: default;
+    }
+    .tap-note {
+      font-size: 0.6rem; color: var(--border);
+      letter-spacing: 0.1em; margin-top: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 38</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">THE VOID</h1>
+    <div>
+      <div class="field">
+        <button class="invisible-btn" id="secret" tabindex="-1" aria-hidden="true"></button>
+      </div>
+      <p class="tap-note" style="text-align:center">[ something lurks here ]</p>
+    </div>
+    <p class="clue">Not all doors are visible.<br>Something hides in the northeast.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(38);
+    document.getElementById('secret').addEventListener('click', function () {
+      completeLevel('painter.html', 38);
+    });
+    /* make cursor change to pointer on hover for desktop discoverability */
+    document.getElementById('secret').style.cursor = 'default';
+  </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 28</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .ghost-field {
+      width: 280px; height: 140px;
+      border: 1px solid var(--border);
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .ghost-word {
+      font-size: 2.5rem; letter-spacing: 0.2em;
+      color: rgba(0,0,0,0.04);
+      user-select: none; pointer-events: none;
+    }
+    .brightness-hint {
+      font-size: 0.6rem; color: var(--muted);
+      letter-spacing: 0.1em; margin-top: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 28</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">NEARLY NOTHING</h1>
+    <div>
+      <div class="ghost-field">
+        <span class="ghost-word">GHOST</span>
+      </div>
+      <p class="brightness-hint" style="text-align:center">[ turn your brightness up ]</p>
+    </div>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">Open your eyes wider.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(28);
+    bindAnswer('ans', 'ghost', 'listen.html', 28);
+  </script>
+</body>
+</html>

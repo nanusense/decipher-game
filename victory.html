@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — COMPLETE</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <p style="font-size:0.7rem;letter-spacing:0.2em;color:var(--muted)">ALL 50 LEVELS</p>
+    <h1 class="logo" style="font-size:clamp(1.5rem,8vw,3rem)">DECIPHERED</h1>
+    <div class="line"></div>
+    <p class="clue">
+      You found what was hidden.<br>
+      You saw what was always there.<br><br>
+      The puzzle was never the page.<br>
+      It was the way you looked at it.
+    </p>
+    <p style="font-size:0.65rem;color:var(--muted);letter-spacing:0.1em" id="stat"></p>
+    <a href="index.html" class="btn" style="text-decoration:none">PLAY AGAIN</a>
+  </div>
+  <script>
+    var s = parseInt(localStorage.getItem('decipherProgress') || '50');
+    document.getElementById('stat').textContent = s + ' / 50 LEVELS COMPLETED';
+  </script>
+</body>
+</html>

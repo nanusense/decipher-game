@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 47</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .target-field {
+      width: 300px; height: 220px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      position: relative; cursor: crosshair;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .crosshair {
+      position: absolute;
+      width: 16px; height: 16px;
+      pointer-events: none;
+      display: none;
+    }
+    .crosshair::before, .crosshair::after {
+      content: ''; position: absolute; background: var(--muted);
+    }
+    .crosshair::before { width: 1px; height: 16px; left: 7px; top: 0; }
+    .crosshair::after  { width: 16px; height: 1px; left: 0; top: 7px; }
+    .coords-display { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.08em; font-variant-numeric: tabular-nums; }
+    .target-dot {
+      position: absolute;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: transparent;
+      border: 1px dashed var(--border);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      transition: border-color 0.2s;
+    }
+    .target-dot.hit { border-color: var(--success); background: var(--success); }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 47</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">COORDINATES</h1>
+    <p style="font-size:1.2rem;letter-spacing:0.1em;color:var(--text)">( 42 , 137 )</p>
+
+    <div class="target-field" id="field">
+      <div class="crosshair" id="cross"></div>
+      <div class="target-dot" id="tdot" style="left:42px;top:137px"></div>
+    </div>
+
+    <p class="coords-display" id="coordsDisplay">x: — &nbsp; y: —</p>
+    <p class="clue">Precision. Down to the pixel.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(47);
+    var field   = document.getElementById('field');
+    var cross   = document.getElementById('cross');
+    var tdot    = document.getElementById('tdot');
+    var display = document.getElementById('coordsDisplay');
+    var TARGET  = { x: 42, y: 137 };
+    var RADIUS  = 18;
+
+    field.addEventListener('mousemove', function (e) {
+      var r = field.getBoundingClientRect();
+      var x = Math.round(e.clientX - r.left);
+      var y = Math.round(e.clientY - r.top);
+      display.textContent = 'x: ' + x + '   y: ' + y;
+      cross.style.display = 'block';
+      cross.style.left = (x - 8) + 'px';
+      cross.style.top  = (y - 8) + 'px';
+    });
+
+    field.addEventListener('mouseleave', function () { cross.style.display = 'none'; });
+
+    function handleTap(e) {
+      e.preventDefault();
+      var r  = field.getBoundingClientRect();
+      var cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      var cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+      var dist = Math.hypot(cx - TARGET.x, cy - TARGET.y);
+      display.textContent = 'x: ' + Math.round(cx) + '   y: ' + Math.round(cy);
+      if (dist <= RADIUS) {
+        tdot.classList.add('hit');
+        display.style.color = 'var(--success)';
+        setTimeout(function () { completeLevel('timing.html', 47); }, 600);
+      }
+    }
+
+    field.addEventListener('click',      handleTap);
+    field.addEventListener('touchend',   handleTap, { passive: false });
+  </script>
+</body>
+</html>

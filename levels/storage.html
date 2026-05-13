@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 45</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .terminal {
+      width: 100%; max-width: 360px;
+      background: #111; color: #00ff88;
+      font-size: 0.72rem; line-height: 1.8;
+      padding: 1rem; font-family: var(--font);
+      border: 1px solid #333;
+    }
+    .terminal .prompt { color: #666; }
+    .term-input {
+      background: transparent; border: none; outline: none;
+      color: #00ff88; font-family: var(--font); font-size: 0.72rem;
+      width: calc(100% - 2rem); caret-color: #00ff88;
+    }
+    .term-output { color: #aaa; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 45</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">STORAGE</h1>
+    <div class="terminal" id="term">
+      <div><span class="prompt">$ </span>localStorage.getItem('secret45')</div>
+      <div class="term-output" id="output">…</div>
+      <div><span class="prompt">$ </span><input class="term-input" id="termInput" placeholder="type command…" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+    </div>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">Your browser remembers more than you think.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(45);
+    localStorage.setItem('secret45', 'vault');
+
+    var termInput = document.getElementById('termInput');
+    var output    = document.getElementById('output');
+
+    termInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        var cmd = termInput.value.trim();
+        if (cmd.indexOf('secret45') !== -1 || cmd.indexOf('getItem') !== -1) {
+          output.textContent = '"vault"';
+          output.style.color = '#00ff88';
+        } else {
+          output.textContent = 'null';
+        }
+        termInput.value = '';
+      }
+    });
+
+    /* clicking terminal focuses input */
+    document.getElementById('term').addEventListener('click', function () { termInput.focus(); });
+
+    bindAnswer('ans', 'vault', 'halves.html', 45);
+  </script>
+</body>
+</html>

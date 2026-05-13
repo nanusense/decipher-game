@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 18</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .horses {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 0.4rem; max-width: 300px; min-height: 48px;
+    }
+    .horse { font-size: 1.8rem; }
+    .add-btn {
+      width: 64px; height: 64px; border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer; font-size: 1.6rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.08s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .add-btn:active { transform: scale(0.9); }
+    #timer-bar-wrap {
+      width: 200px; height: 4px;
+      background: var(--border); border-radius: 2px;
+      overflow: hidden; opacity: 0;
+      transition: opacity 0.2s;
+    }
+    #timer-bar {
+      height: 100%; width: 100%;
+      background: var(--accent);
+      transform-origin: left;
+      transition: transform 3s linear;
+    }
+    .status { font-size: 0.7rem; letter-spacing: 0.12em; color: var(--muted); min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 18</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page" style="gap:1.6rem">
+    <p class="clue">How many rode into town?</p>
+    <div class="horses" id="horses"></div>
+    <button class="add-btn" id="btn">🤠</button>
+    <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
+    <p class="status" id="status"></p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(18);
+
+    var TARGET = 7;
+    var n = 0;
+    var timerId = null;
+    var done = false;
+
+    var horsesEl  = document.getElementById('horses');
+    var statusEl  = document.getElementById('status');
+    var btn       = document.getElementById('btn');
+    var barWrap   = document.getElementById('timer-bar-wrap');
+    var bar       = document.getElementById('timer-bar');
+
+    function startBar() {
+      bar.style.transition = 'none';
+      bar.style.transform  = 'scaleX(1)';
+      barWrap.style.opacity = '1';
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          bar.style.transition = 'transform 3s linear';
+          bar.style.transform  = 'scaleX(0)';
+        });
+      });
+    }
+
+    function stopBar() {
+      barWrap.style.opacity = '0';
+      bar.style.transition  = 'none';
+      bar.style.transform   = 'scaleX(1)';
+    }
+
+    function doReset() {
+      n = 0;
+      done = false;
+      horsesEl.innerHTML = '';
+      statusEl.textContent = '';
+      btn.textContent = '🤠';
+      stopBar();
+    }
+
+    btn.addEventListener('click', function () {
+      if (done) return;
+
+      clearTimeout(timerId);
+      n++;
+
+      var h = document.createElement('span');
+      h.className = 'horse';
+      h.textContent = '🏇';
+      horsesEl.appendChild(h);
+      statusEl.textContent = '';
+
+      startBar();
+
+      timerId = setTimeout(function () {
+        if (n === TARGET) {
+          done = true;
+          statusEl.textContent = '✓';
+          stopBar();
+          setTimeout(function () { completeLevel('lock.html', 18); }, 500);
+        } else {
+          statusEl.textContent = 'not quite';
+          setTimeout(doReset, 600);
+        }
+      }, 3000);
+    });
+  </script>
+</body>
+</html>

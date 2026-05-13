@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 15</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <span class="badge">LEVEL 15</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page" id="portrait">
+    <p class="clue">Change your perspective.</p>
+  </div>
+  <div style="display:none;flex-direction:column;align-items:center;gap:2rem;padding:2rem" id="landscape">
+    <p class="clue">There it is.</p>
+    <button class="btn btn-accent" id="goBtn">CONTINUE</button>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(15);
+
+    var startedLandscape = window.innerWidth > window.innerHeight;
+
+    function check() {
+      var nowLandscape = window.innerWidth > window.innerHeight;
+      var changed = nowLandscape !== startedLandscape;
+      document.getElementById('portrait').style.display  = changed ? 'none' : 'flex';
+      document.getElementById('landscape').style.display = changed ? 'flex' : 'none';
+    }
+
+    document.getElementById('goBtn').addEventListener('click', function () {
+      completeLevel('blind.html', 15);
+    });
+
+    window.addEventListener('orientationchange', check);
+    window.addEventListener('resize', check);
+    check();
+  </script>
+</body>
+</html>

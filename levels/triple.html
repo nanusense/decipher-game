@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 13</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .lock-body {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .dials { display: flex; gap: 1rem; align-items: center; }
+    .dial {
+      display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+    }
+    .dial-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 0.8rem; color: var(--muted); padding: 0.3rem 0.6rem;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s;
+    }
+    .dial-btn:active { color: var(--text); }
+    .dial-display {
+      width: 52px; height: 64px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; letter-spacing: 0;
+      background: #fff;
+      user-select: none;
+      transition: border-color 0.2s;
+    }
+    .dial-separator { font-size: 1.5rem; color: var(--border); margin-bottom: 0.5rem; }
+    .lock-icon {
+      font-size: 2rem; cursor: pointer;
+      transition: transform 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .lock-icon:active { transform: scale(0.92); }
+    .lock-msg { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; min-height: 1em; }
+    .dials.correct .dial-display { border-color: var(--success); }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-6px); }
+      75%      { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.3s ease; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 13</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">CALL THE DEVIL</h1>
+    <div class="lock-body" id="lockBody">
+      <div class="dials" id="dials">
+        <div class="dial" data-index="0">
+          <button class="dial-btn up">▲</button>
+          <div class="dial-display" id="d0">0</div>
+          <button class="dial-btn down">▼</button>
+        </div>
+        <div class="dial-separator">·</div>
+        <div class="dial" data-index="1">
+          <button class="dial-btn up">▲</button>
+          <div class="dial-display" id="d1">0</div>
+          <button class="dial-btn down">▼</button>
+        </div>
+        <div class="dial-separator">·</div>
+        <div class="dial" data-index="2">
+          <button class="dial-btn up">▲</button>
+          <div class="dial-display" id="d2">0</div>
+          <button class="dial-btn down">▼</button>
+        </div>
+      </div>
+      <div class="lock-icon" id="lockIcon">🔒</div>
+      <div class="lock-msg" id="lockMsg"></div>
+    </div>
+    <p class="clue">The number of the beast.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(13);
+    var values = [0, 0, 0];
+    var TARGET = [6, 6, 6];
+    var unlocked = false;
+
+    function updateDisplay() {
+      for (var i = 0; i < 3; i++) {
+        document.getElementById('d' + i).textContent = values[i];
+      }
+    }
+
+    document.querySelectorAll('.dial').forEach(function (dial) {
+      var idx = parseInt(dial.dataset.index);
+      dial.querySelector('.up').addEventListener('click', function () {
+        if (unlocked) return;
+        values[idx] = (values[idx] + 1) % 10;
+        updateDisplay();
+      });
+      dial.querySelector('.down').addEventListener('click', function () {
+        if (unlocked) return;
+        values[idx] = (values[idx] + 9) % 10;
+        updateDisplay();
+      });
+
+      /* swipe up/down on dial display */
+      var startY = null;
+      var display = dial.querySelector('.dial-display');
+      display.addEventListener('touchstart', function (e) { startY = e.touches[0].clientY; }, { passive: true });
+      display.addEventListener('touchend', function (e) {
+        if (startY === null) return;
+        var dy = startY - e.changedTouches[0].clientY;
+        if (Math.abs(dy) > 10) {
+          if (dy > 0) { values[idx] = (values[idx] + 1) % 10; }
+          else        { values[idx] = (values[idx] + 9) % 10; }
+          updateDisplay();
+        }
+        startY = null;
+      }, { passive: true });
+    });
+
+    document.getElementById('lockIcon').addEventListener('click', function () {
+      if (unlocked) return;
+      if (values[0] === TARGET[0] && values[1] === TARGET[1] && values[2] === TARGET[2]) {
+        unlocked = true;
+        document.getElementById('lockIcon').textContent = '🔓';
+        document.getElementById('dials').classList.add('correct');
+        document.getElementById('lockMsg').textContent = 'unlocked';
+        setTimeout(function () { completeLevel('hunt.html', 13); }, 800);
+      } else {
+        var lb = document.getElementById('lockBody');
+        lb.classList.remove('shake');
+        void lb.offsetWidth;
+        lb.classList.add('shake');
+        document.getElementById('lockMsg').textContent = 'try again';
+        setTimeout(function () { document.getElementById('lockMsg').textContent = ''; }, 1000);
+      }
+    });
+  </script>
+</body>
+</html>

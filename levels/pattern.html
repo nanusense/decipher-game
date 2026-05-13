@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 17</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .grid-wrap {
+      display: grid;
+      grid-template-columns: repeat(4, 52px);
+      gap: 12px;
+    }
+    .gdot {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .gdot.lit    { background: var(--text);    border-color: var(--text); }
+    .gdot.active { background: var(--accent);  border-color: var(--accent); }
+    .gdot.correct{ background: var(--success); border-color: var(--success); }
+    .gdot.wrong  { background: var(--danger);  border-color: var(--danger); }
+    .gdot.locked { pointer-events: none; }
+
+    #countdown {
+      font-size: 2.5rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      min-height: 3rem;
+      transition: opacity 0.3s;
+    }
+    #msg {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      min-height: 1em;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 17</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page" style="gap:1.4rem">
+    <p class="clue">Remember the shape.</p>
+    <div id="countdown"></div>
+    <div class="grid-wrap" id="grid"></div>
+    <p id="msg"></p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(17);
+
+    /* irregular 4×4 pattern — indices in a 4×4 grid (0=top-left, 15=bottom-right) */
+    var TARGET = [0, 2, 4, 7, 9, 11, 13, 14];
+    var selected = [];
+    var interactive = false;
+
+    /* build grid */
+    var gridEl = document.getElementById('grid');
+    for (var i = 0; i < 16; i++) {
+      var d = document.createElement('div');
+      d.className = 'gdot locked';
+      d.dataset.i = i;
+      gridEl.appendChild(d);
+    }
+
+    var dots = gridEl.querySelectorAll('.gdot');
+
+    function setMsg(t) { document.getElementById('msg').textContent = t; }
+
+    /* flash phase */
+    TARGET.forEach(function (i) { dots[i].classList.add('lit'); });
+    setMsg('MEMORISE');
+
+    var countdown = document.getElementById('countdown');
+    var t = 1.5;
+    countdown.textContent = t.toFixed(1);
+    var tick = setInterval(function () {
+      t -= 0.1;
+      if (t <= 0) {
+        clearInterval(tick);
+        countdown.textContent = '';
+        hide();
+      } else {
+        countdown.textContent = t.toFixed(1);
+      }
+    }, 100);
+
+    function hide() {
+      TARGET.forEach(function (i) { dots[i].classList.remove('lit'); });
+      dots.forEach(function (d) { d.classList.remove('locked'); });
+      interactive = true;
+      setMsg('NOW MATCH IT');
+    }
+
+    /* tap phase */
+    dots.forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        if (!interactive) return;
+        var i = parseInt(dot.dataset.i);
+        if (selected.indexOf(i) !== -1) return;
+        selected.push(i);
+        dot.classList.add('active');
+
+        if (selected.length === TARGET.length) {
+          interactive = false;
+          var ok = TARGET.slice().sort().join() === selected.slice().sort().join();
+          if (ok) {
+            dots.forEach(function (d) { d.classList.add('correct'); });
+            setMsg('');
+            setTimeout(function () { completeLevel('count.html', 17); }, 600);
+          } else {
+            dots.forEach(function (d) { d.classList.add('wrong'); });
+            setMsg('WRONG — TRY AGAIN');
+            setTimeout(function () {
+              dots.forEach(function (d) { d.className = 'gdot locked'; });
+              selected = [];
+              /* flash again */
+              TARGET.forEach(function (i) { dots[i].classList.add('lit'); });
+              setMsg('MEMORISE');
+              t = 1.5;
+              countdown.textContent = t.toFixed(1);
+              tick = setInterval(function () {
+                t -= 0.1;
+                if (t <= 0) {
+                  clearInterval(tick);
+                  countdown.textContent = '';
+                  hide();
+                } else {
+                  countdown.textContent = t.toFixed(1);
+                }
+              }, 100);
+            }, 800);
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 33</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .emoji-row { font-size: 2.2rem; letter-spacing: 0.2em; }
+    .cipher-key {
+      display: grid; grid-template-columns: repeat(5, auto);
+      gap: 0.4rem 1rem; font-size: 0.68rem; color: var(--muted);
+      justify-content: center;
+    }
+    .cipher-key span { text-align: center; }
+    .cipher-key .em  { font-size: 1rem; display: block; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 33</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">EMOJI</h1>
+    <div class="emoji-row">🔥🌊🍎🌙⭐</div>
+    <div class="line"></div>
+    <div class="cipher-key">
+      <span><span class="em">🔥</span>F</span>
+      <span><span class="em">🌊</span>L</span>
+      <span><span class="em">🍎</span>A</span>
+      <span><span class="em">🌙</span>M</span>
+      <span><span class="em">⭐</span>E</span>
+    </div>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">The language of pictures.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(33);
+    bindAnswer('ans', 'flame', 'phone.html', 33);
+  </script>
+</body>
+</html>

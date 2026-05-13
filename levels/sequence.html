@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 9</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .medal-row { display: flex; gap: 2.5rem; align-items: center; }
+    .medal {
+      display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s, opacity 0.2s;
+    }
+    .medal:active { transform: scale(0.92); }
+    .medal-icon {
+      display: flex; flex-direction: column; align-items: center;
+      user-select: none; gap: 0;
+    }
+    .medal-ribbon {
+      width: 14px; height: 22px;
+      border-radius: 2px 2px 0 0;
+    }
+    .medal-disc {
+      width: 62px; height: 62px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; line-height: 1;
+      border: 3px solid rgba(255,255,255,0.25);
+    }
+    #gold   .medal-ribbon { background: #9B7A0E; }
+    #gold   .medal-disc   { background: radial-gradient(circle at 30% 30%, #FFF0A0, #D4AF37, #9B7A0E); box-shadow: 0 3px 12px rgba(212,175,55,0.6); }
+    #silver .medal-ribbon { background: #6E6E6E; }
+    #silver .medal-disc   { background: radial-gradient(circle at 30% 30%, #F5F5F5, #A8A9AD, #6E6E6E); box-shadow: 0 3px 12px rgba(168,169,173,0.6); }
+    #bronze .medal-ribbon { background: #7B4A1E; }
+    #bronze .medal-disc   { background: radial-gradient(circle at 30% 30%, #F0C080, #CD7F32, #7B4A1E); box-shadow: 0 3px 12px rgba(205,127,50,0.6); }
+    .medal.done { opacity: 0.3; pointer-events: none; }
+    .medal.done .medal-icon { filter: grayscale(1); }
+    .feedback { font-size: 0.75rem; color: var(--danger); letter-spacing: 0.1em; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 9</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <div class="medal-row">
+      <div class="medal" id="silver" data-order="2"><div class="medal-icon"><div class="medal-ribbon"></div><div class="medal-disc">★</div></div></div>
+      <div class="medal" id="bronze" data-order="3"><div class="medal-icon"><div class="medal-ribbon"></div><div class="medal-disc">★</div></div></div>
+      <div class="medal" id="gold"   data-order="1"><div class="medal-icon"><div class="medal-ribbon"></div><div class="medal-disc">★</div></div></div>
+    </div>
+    <p class="feedback" id="fb"></p>
+    <p class="clue">The winning order.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(9);
+    var next = 1;
+    var fb   = document.getElementById('fb');
+
+    document.querySelectorAll('.medal').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var order = parseInt(el.dataset.order);
+        if (order === next) {
+          el.classList.add('done');
+          next++;
+          fb.textContent = '';
+          if (next > 3) setTimeout(function () { completeLevel('sesame.html', 9); }, 400);
+        } else {
+          next = 1;
+          document.querySelectorAll('.medal').forEach(function (m) { m.classList.remove('done'); });
+          fb.textContent = 'wrong order — try again';
+          setTimeout(function () { fb.textContent = ''; }, 1200);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

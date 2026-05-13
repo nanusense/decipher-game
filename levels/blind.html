@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 16</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    @keyframes pageShake {
+      0%,100% { transform: translateX(0); }
+      15%      { transform: translateX(-8px) rotate(-1deg); }
+      35%      { transform: translateX(8px)  rotate(1deg); }
+      55%      { transform: translateX(-6px) rotate(-0.5deg); }
+      75%      { transform: translateX(6px)  rotate(0.5deg); }
+    }
+    .shaking { animation: pageShake 0.4s ease; }
+
+    #goBtn {
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+    }
+    #goBtn.show {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 16</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page" id="page">
+    <p class="clue" style="font-size:1.1rem">'Cause the players gonna play, play, play, play, play<br>And the haters gonna hate, hate, hate, hate, hate<br>Baby, I'm just gonna…</p>
+    <button class="btn btn-accent" id="goBtn">CONTINUE</button>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(16);
+
+    var done = false;
+
+    function trigger() {
+      if (done) return;
+      done = true;
+      var page = document.getElementById('page');
+      page.classList.add('shaking');
+      document.getElementById('goBtn').classList.add('show');
+    }
+
+    /* mobile — accelerometer shake */
+    var lastAcc = null;
+    window.addEventListener('devicemotion', function (e) {
+      var a = e.accelerationIncludingGravity;
+      if (!a) return;
+      if (lastAcc) {
+        var dx = Math.abs(a.x - lastAcc.x);
+        var dy = Math.abs(a.y - lastAcc.y);
+        if (dx + dy > 30) trigger();
+      }
+      lastAcc = { x: a.x, y: a.y };
+    });
+
+    /* desktop — rapid back-and-forth mouse shake (requires 4 direction reversals) */
+    var lastX = null;
+    var lastDir = 0;
+    var reversals = [];
+    document.addEventListener('mousemove', function (e) {
+      if (lastX === null) { lastX = e.clientX; return; }
+      var dx = e.clientX - lastX;
+      if (Math.abs(dx) < 8) return;
+      var dir = dx > 0 ? 1 : -1;
+      if (dir !== lastDir && lastDir !== 0) {
+        var now = Date.now();
+        reversals.push(now);
+        reversals = reversals.filter(function (t) { return now - t < 600; });
+        if (reversals.length >= 8) trigger();
+      }
+      lastDir = dir;
+      lastX = e.clientX;
+    });
+
+    document.getElementById('goBtn').addEventListener('click', function () {
+      completeLevel('pattern.html', 16);
+    });
+  </script>
+</body>
+</html>

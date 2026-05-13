@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 44</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <span class="badge">LEVEL 44</span>
+  <a href="../index.html" class="home-link">HOME</a>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal-box">
+      <button class="modal-close" id="closeModal">✕</button>
+      <div style="font-size:0.65rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.75rem">BROWSER COOKIES</div>
+      <pre class="modal-code">Name: &nbsp;&nbsp; <span class="hl">hint</span>
+Value: &nbsp; <span class="hl">sweet</span>
+Domain: &nbsp;localhost
+Path: &nbsp;&nbsp; /
+Expires: session</pre>
+    </div>
+  </div>
+
+  <div class="page">
+    <h1 class="title">COOKIES</h1>
+    <div style="font-size:3rem">🍪</div>
+    <button class="btn" id="checkBtn">CHECK COOKIES</button>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">What did the page leave behind?</p>
+  </div>
+
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(44);
+    document.cookie = 'hint=sweet; path=/';
+
+    document.getElementById('checkBtn').addEventListener('click', function () {
+      document.getElementById('modal').classList.add('open');
+    });
+    document.getElementById('closeModal').addEventListener('click', function () {
+      document.getElementById('modal').classList.remove('open');
+    });
+
+    bindAnswer('ans', 'sweet', 'storage.html', 44);
+  </script>
+</body>
+</html>

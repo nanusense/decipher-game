@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 19</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .puzzle {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      grid-template-rows: repeat(3, 80px);
+      gap: 6px;
+    }
+    .tile {
+      width: 80px; height: 80px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.12s, background 0.12s, border-color 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tile:active { transform: scale(0.93); }
+    .tile.movable {
+      border-color: var(--accent);
+      cursor: pointer;
+    }
+    .tile.empty {
+      background: transparent;
+      border-color: transparent;
+      cursor: default;
+      pointer-events: none;
+    }
+    .tile.correct {
+      background: var(--surface);
+      border-color: var(--success);
+    }
+    @keyframes solved {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .tile.solved-anim { animation: solved 0.4s ease; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 19</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page" style="gap:1.8rem">
+    <h1 class="title">OUT OF ORDER</h1>
+    <div class="puzzle" id="puzzle"></div>
+    <p class="clue">Put it right.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(19);
+
+    var SIZE = 3;
+    var tiles = [];
+    var done = false;
+
+    var LABELS = ['1','2','3','4','5','6','7','8',''];
+
+    function getEmpty() { return tiles.indexOf(null); }
+
+    function isAdjacent(i) {
+      var e = getEmpty();
+      var er = Math.floor(e / SIZE), ec = e % SIZE;
+      var ir = Math.floor(i / SIZE), ic = i % SIZE;
+      return (er === ir && Math.abs(ec - ic) === 1) ||
+             (ec === ic && Math.abs(er - ir) === 1);
+    }
+
+    function doMove(i) {
+      var e = getEmpty();
+      tiles[e] = tiles[i];
+      tiles[i] = null;
+    }
+
+    function isSolved() {
+      for (var i = 0; i < 8; i++) { if (tiles[i] !== i + 1) return false; }
+      return tiles[8] === null;
+    }
+
+    function shuffle() {
+      tiles = [1,2,3,4,5,6,7,8,null];
+      var last = -1;
+      for (var k = 0; k < 120; k++) {
+        var e = getEmpty();
+        var neighbors = [];
+        [-1,1,-SIZE,SIZE].forEach(function (d) {
+          var j = e + d;
+          if (j < 0 || j >= 9) return;
+          if (d === 1  && e % SIZE === SIZE - 1) return;
+          if (d === -1 && e % SIZE === 0) return;
+          if (j !== last) neighbors.push(j);
+        });
+        var pick = neighbors[Math.floor(Math.random() * neighbors.length)];
+        last = e;
+        doMove(pick);
+      }
+    }
+
+    function render() {
+      var puzzleEl = document.getElementById('puzzle');
+      puzzleEl.innerHTML = '';
+      tiles.forEach(function (val, i) {
+        var t = document.createElement('div');
+        t.className = 'tile' + (val === null ? ' empty' : '') +
+                      (val !== null && isAdjacent(i) ? ' movable' : '');
+        t.textContent = val !== null ? val : '';
+        t.dataset.i = i;
+        t.addEventListener('click', function () {
+          if (done || val === null || !isAdjacent(i)) return;
+          doMove(i);
+          if (isSolved()) {
+            done = true;
+            render();
+            document.querySelectorAll('.tile:not(.empty)').forEach(function (el) {
+              el.classList.add('solved-anim', 'correct');
+            });
+            setTimeout(function () { completeLevel('highlight.html', 19); }, 800);
+          } else {
+            render();
+          }
+        });
+        puzzleEl.appendChild(t);
+      });
+    }
+
+    shuffle();
+    /* make sure it's not accidentally solved on load */
+    while (isSolved()) { shuffle(); }
+    render();
+  </script>
+</body>
+</html>

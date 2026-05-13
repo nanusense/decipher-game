@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 42</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .ws-wrap { overflow-x: auto; max-width: 100%; }
+    .word-list { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; justify-content: center; }
+    .wl-item { font-size: 0.72rem; letter-spacing: 0.1em; color: var(--muted); }
+    .wl-item.found { color: var(--success); text-decoration: line-through; }
+    .ws-status { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.08em; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 42</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">THE GRID</h1>
+
+    <div class="word-list" id="wordList">
+      <span class="wl-item" data-word="DARK">DARK</span>
+      <span class="wl-item" data-word="DEEP">DEEP</span>
+      <span class="wl-item" data-word="ECHO">ECHO</span>
+      <span class="wl-item" data-word="MIST">MIST</span>
+      <span class="wl-item" data-word="RISE">RISE</span>
+    </div>
+
+    <div class="ws-wrap">
+      <div class="ws-grid" id="wsGrid" style="grid-template-columns:repeat(10,32px)"></div>
+    </div>
+
+    <p class="ws-status" id="wsStatus">find all 5 words</p>
+    <p class="clue">Seek every word on the list.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(42);
+
+    /* 10×10 grid. Pre-placed words:
+       DARK  row0 col0 horizontal
+       DEEP  col0 row0 vertical (shares D)
+       ECHO  diagonal r2c2→r5c5  (E,C,H,O)
+       MIST  row5 col1 horizontal-backwards (TSIM → read MIST right-to-left)
+       RISE  col8 row1 vertical              */
+    var GRID_LETTERS =
+      'DARK' + 'XXXXR' + 'X' +   // row 0: D A R K X X X X R X  → DEEP shares col8: R(0,8)
+      'E' + 'XXXXXXXXX' +         // row 1: E + 8 filler
+      'EE' + 'XXXXXXXI' +         // row 2: col0=E, col2=E(echo start) ... col8=I
+      'P' + 'XXC' + 'XXXXS' +     // row 3: col0=P, col3=C, col8=S
+      'XXXXH' + 'XXE' + 'X' +    // row 4: col4=H, col7=E (col8=E also)
+      'XTSIM' + 'XXX' + 'X' +    // row 5: col1=T,col2=S,col3=I,col4=M  + col5=O(echo)
+      'XXXXXXX' + 'XXX' +         // row 6
+      'XXXXXXXXXX' +               // row 7
+      'XXXXXXXXXX' +               // row 8
+      'XXXXXXXXXX';                // row 9
+
+    /* Actually build it properly */
+    var g = [];
+    for (var i = 0; i < 100; i++) g.push('X');
+    function set(r,c,ch){ g[r*10+c]=ch; }
+
+    /* DARK row0 */
+    set(0,0,'D');set(0,1,'A');set(0,2,'R');set(0,3,'K');
+    /* DEEP col0 */
+    set(0,0,'D');set(1,0,'E');set(2,0,'E');set(3,0,'P');
+    /* ECHO diagonal */
+    set(2,2,'E');set(3,3,'C');set(4,4,'H');set(5,5,'O');
+    /* MIST row5 backwards (read right→left: M I S T) */
+    set(5,4,'M');set(5,3,'I');set(5,2,'S');set(5,1,'T');
+    /* RISE col8 */
+    set(1,8,'R');set(2,8,'I');set(3,8,'S');set(4,8,'E');
+
+    /* fill X with random letters */
+    var ALPHA='ABCDEFGHJKLMNOPQRTUVWXYZ';
+    for(var i=0;i<100;i++){ if(g[i]==='X') g[i]=ALPHA[Math.floor(Math.random()*ALPHA.length)]; }
+
+    /* render */
+    var wsGrid = document.getElementById('wsGrid');
+    g.forEach(function(ch,i){ var d=document.createElement('div'); d.className='ws-cell'; d.textContent=ch; d.dataset.i=i; wsGrid.appendChild(d); });
+
+    /* word definitions for checking: word → array of cell indices */
+    var WORDS = {
+      DARK: [0,1,2,3],
+      DEEP: [0,10,20,30],
+      ECHO: [22,33,44,55],
+      MIST: [54,53,52,51],
+      RISE: [18,28,38,48]
+    };
+
+    var foundWords = {};
+    var selecting  = false;
+    var selStart   = -1;
+
+    wsGrid.querySelectorAll('.ws-cell').forEach(function(cell){
+      cell.addEventListener('mousedown',  function(){ selecting=true; selStart=parseInt(cell.dataset.i); cell.classList.add('selected'); });
+      cell.addEventListener('mouseover',  function(){ if(selecting) cell.classList.add('selected'); });
+      cell.addEventListener('mouseup',    checkSelection);
+      cell.addEventListener('touchstart', function(e){ e.preventDefault(); selecting=true; selStart=parseInt(cell.dataset.i); cell.classList.add('selected'); },{passive:false});
+      cell.addEventListener('touchend',   checkSelection);
+    });
+
+    function checkSelection(){
+      selecting=false;
+      var sel=[].map.call(wsGrid.querySelectorAll('.ws-cell.selected'),function(c){return parseInt(c.dataset.i);});
+      var matched=false;
+      Object.keys(WORDS).forEach(function(w){
+        if(foundWords[w]) return;
+        var wi=WORDS[w];
+        if(sel.length===wi.length && wi.every(function(idx){return sel.indexOf(idx)!==-1;})){
+          foundWords[w]=true; matched=true;
+          wsGrid.querySelectorAll('.ws-cell.selected').forEach(function(c){c.classList.remove('selected');c.classList.add('found');});
+          document.querySelector('[data-word="'+w+'"]').classList.add('found');
+        }
+      });
+      if(!matched) wsGrid.querySelectorAll('.ws-cell.selected').forEach(function(c){c.classList.remove('selected');});
+      var count=Object.keys(foundWords).length;
+      document.getElementById('wsStatus').textContent=count+' / 5 found';
+      if(count===5){ document.getElementById('wsStatus').style.color='var(--success)'; setTimeout(function(){completeLevel('crossword.html',42);},700); }
+    }
+  </script>
+</body>
+</html>

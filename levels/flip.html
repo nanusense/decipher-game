@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 27</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .upside { font-size: 2rem; letter-spacing: 0.15em; transform: rotate(180deg); display: inline-block; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 27</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">UPSIDE DOWN</h1>
+    <span class="upside">PILF</span>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">Turn it around.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(27);
+    bindAnswer('ans', 'flip', 'ghost.html', 27);
+  </script>
+</body>
+</html>

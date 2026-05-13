@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 35</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .bin-block {
+      font-size: 1rem; letter-spacing: 0.08em; line-height: 2.2;
+      text-align: center; color: var(--text); font-variant-numeric: tabular-nums;
+    }
+    .bin-block span { display: inline-block; margin: 0 0.5rem; }
+    .alpha-note { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; }
+    .clue-binary { font-size: 0.7rem; color: var(--border); letter-spacing: 0.05em; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 35</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">BINARY</h1>
+    <div class="bin-block">
+      <span>00100</span>
+      <span>00001</span>
+      <span>10010</span>
+      <span>01011</span>
+    </div>
+    <p class="alpha-note">A = 00001 &nbsp; B = 00010 &nbsp; … &nbsp; Z = 11010</p>
+    <p class="clue-binary">01000111 01001111</p>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">Convert and read.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(35);
+    /* 00100=4=D, 00001=1=A, 10010=18=R, 01011=11=K → DARK */
+    bindAnswer('ans', 'dark', 'caesar.html', 35);
+  </script>
+</body>
+</html>

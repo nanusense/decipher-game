@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 5</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .hold-ring {
+      width: 120px; height: 120px; border-radius: 50%;
+      border: 2px solid var(--text);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 0.25rem;
+      cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      position: relative; overflow: hidden;
+    }
+    .hold-fill {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: var(--text); opacity: 0.08;
+      transform: scale(0); transform-origin: center;
+    }
+    .hold-label { font-size: 0.7rem; letter-spacing: 0.15em; position: relative; }
+    .hold-sub   { font-size: 0.55rem; color: var(--muted); position: relative; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 5</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">HOLD ON</h1>
+    <div class="hold-ring" id="ring">
+      <div class="hold-fill" id="fill"></div>
+      <span class="hold-label">HOLD</span>
+      <span class="hold-sub" id="sub">2 seconds</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="bar"></div></div>
+    <p class="clue">Don't let go.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(5);
+    var ring = document.getElementById('ring');
+    var bar  = document.getElementById('bar');
+    var sub  = document.getElementById('sub');
+    var fill = document.getElementById('fill');
+    var HOLD = 2000, start = null, raf = null;
+
+    function tick(ts) {
+      if (!start) start = ts;
+      var p = Math.min((ts - start) / HOLD, 1);
+      bar.style.width  = (p * 100) + '%';
+      fill.style.transform = 'scale(' + p + ')';
+      sub.textContent = p < 1 ? Math.ceil(HOLD * (1 - p) / 1000) + 's' : '✓';
+      if (p < 1) { raf = requestAnimationFrame(tick); }
+      else { setTimeout(function () { completeLevel('ink.html', 5); }, 300); }
+    }
+
+    function go(e) { e.preventDefault(); start = null; raf = requestAnimationFrame(tick); }
+    function stop() { cancelAnimationFrame(raf); start = null; bar.style.width = '0%'; fill.style.transform = 'scale(0)'; sub.textContent = '2 seconds'; }
+
+    ring.addEventListener('mousedown',  go);
+    ring.addEventListener('touchstart', go,   { passive: false });
+    ring.addEventListener('mouseup',    stop);
+    ring.addEventListener('mouseleave', stop);
+    ring.addEventListener('touchend',   stop);
+    ring.addEventListener('touchmove',  stop);
+  </script>
+</body>
+</html>

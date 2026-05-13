@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 43</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .cw-outer { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .clues { font-size: 0.72rem; color: var(--muted); line-height: 2; letter-spacing: 0.04em; }
+    .clues strong { color: var(--text); }
+    .cw-hint { font-size: 0.65rem; color: var(--border); letter-spacing: 0.08em; }
+    .cw-answer-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; color: var(--muted); }
+    .col-arrow { font-size: 0.7rem; color: var(--accent); letter-spacing: 0.1em; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 43</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">CROSSWORD</h1>
+
+    <div class="cw-outer">
+      <!-- 3 rows × 5 cols; column 2 (0-indexed) is highlighted -->
+      <div class="cw-grid" style="grid-template-columns:repeat(5,36px);grid-template-rows:repeat(3,36px)">
+        <!-- Row 0: ANKLE -->
+        <div class="cw-cell"><input class="cw-input" data-r="0" data-c="0" maxlength="1"></div>
+        <div class="cw-cell"><input class="cw-input" data-r="0" data-c="1" maxlength="1"></div>
+        <div class="cw-cell hl"><input class="cw-input" data-r="0" data-c="2" maxlength="1"></div>
+        <div class="cw-cell"><input class="cw-input" data-r="0" data-c="3" maxlength="1"></div>
+        <div class="cw-cell"><input class="cw-input" data-r="0" data-c="4" maxlength="1"></div>
+        <!-- Row 1: STEEL -->
+        <div class="cw-cell"><input class="cw-input" data-r="1" data-c="0" maxlength="1"></div>
+        <div class="cw-cell"><input class="cw-input" data-r="1" data-c="1" maxlength="1"></div>
+        <div class="cw-cell hl"><input class="cw-input" data-r="1" data-c="2" maxlength="1"></div>
+        <div class="cw-cell"><input class="cw-input" data-r="1" data-c="3" maxlength="1"></div>
+        <div class="cw-cell"><input class="cw-input" data-r="1" data-c="4" maxlength="1"></div>
+        <!-- Row 2: STYLE -->
+        <div class="cw-cell"><input class="cw-input" data-r="2" data-c="0" maxlength="1"></div>
+        <div class="cw-cell"><input class="cw-input" data-r="2" data-c="1" maxlength="1"></div>
+        <div class="cw-cell hl"><input class="cw-input" data-r="2" data-c="2" maxlength="1"></div>
+        <div class="cw-cell"><input class="cw-input" data-r="2" data-c="3" maxlength="1"></div>
+        <div class="cw-cell"><input class="cw-input" data-r="2" data-c="4" maxlength="1"></div>
+      </div>
+
+      <div class="col-arrow">↑ highlighted column ↑</div>
+
+      <div class="clues">
+        <strong>1.</strong> Joint between leg and foot (5)<br>
+        <strong>2.</strong> Strong metal alloy (5)<br>
+        <strong>3.</strong> Fashion or manner (5)
+      </div>
+
+      <p class="cw-hint" id="cwHint">fill in the across words — read the blue column</p>
+
+      <div class="answer-wrap">
+        <input class="answer-input" id="ans" type="text" placeholder="blue column word…"
+               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+    </div>
+
+    <p class="clue">Across and down.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(43);
+
+    var ANSWERS = [['A','N','K','L','E'],['S','T','E','E','L'],['S','T','Y','L','E']];
+    var inputs  = document.querySelectorAll('.cw-input');
+
+    inputs.forEach(function(inp){
+      inp.addEventListener('input', function(){
+        inp.value = inp.value.toUpperCase().slice(-1);
+        checkRows();
+        /* auto-advance */
+        var c=parseInt(inp.dataset.c), r=parseInt(inp.dataset.r);
+        if(c<4){ var next=document.querySelector('[data-r="'+r+'"][data-c="'+(c+1)+'"]'); if(next) next.focus(); }
+      });
+    });
+
+    function checkRows(){
+      var allCorrect = ANSWERS.every(function(row, r){
+        return row.every(function(ch, c){
+          var v = document.querySelector('[data-r="'+r+'"][data-c="'+c+'"]').value;
+          return v === ch;
+        });
+      });
+      if(allCorrect){
+        document.getElementById('cwHint').textContent = '✓  now read the highlighted column';
+        document.getElementById('cwHint').style.color = 'var(--success)';
+      }
+    }
+
+    bindAnswer('ans','key','cookie.html',43);
+  </script>
+</body>
+</html>

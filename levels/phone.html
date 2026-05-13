@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 34</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .code-display { font-size: 3rem; letter-spacing: 0.4em; color: var(--text); }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 34</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">OLD PHONE</h1>
+    <div class="code-display">54448</div>
+
+    <div class="keypad">
+      <div class="key"><span class="key-num">1</span><span class="key-letters"> </span></div>
+      <div class="key"><span class="key-num">2</span><span class="key-letters">ABC</span></div>
+      <div class="key"><span class="key-num">3</span><span class="key-letters">DEF</span></div>
+      <div class="key"><span class="key-num">4</span><span class="key-letters">GHI</span></div>
+      <div class="key"><span class="key-num">5</span><span class="key-letters">JKL</span></div>
+      <div class="key"><span class="key-num">6</span><span class="key-letters">MNO</span></div>
+      <div class="key"><span class="key-num">7</span><span class="key-letters">PQRS</span></div>
+      <div class="key"><span class="key-num">8</span><span class="key-letters">TUV</span></div>
+      <div class="key"><span class="key-num">9</span><span class="key-letters">WXYZ</span></div>
+      <div class="key"><span class="key-num">*</span><span class="key-letters"> </span></div>
+      <div class="key"><span class="key-num">0</span><span class="key-letters"> </span></div>
+      <div class="key"><span class="key-num">#</span><span class="key-letters"> </span></div>
+    </div>
+
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">One digit. One letter.<br>Which letter on each key?</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(34);
+    /* 5=JKL→L, 4=GHI→I, 4→G, 4→H, 8=TUV→T  → LIGHT */
+    bindAnswer('ans', 'light', 'binary.html', 34);
+  </script>
+</body>
+</html>

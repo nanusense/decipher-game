@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 2</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .door {
+      width: 120px; height: 200px;
+      border: 2px solid var(--text);
+      position: relative; cursor: pointer;
+      user-select: none; -webkit-tap-highlight-color: transparent;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .door::after {
+      content: '';
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 1px solid var(--text);
+      position: absolute; right: 14px; top: 50%;
+      transform: translateY(-50%);
+    }
+    .door-panel {
+      position: absolute; inset: 4px;
+      transition: transform 0.5s ease;
+      transform-origin: left center;
+      background: var(--surface);
+    }
+    .door.opened .door-panel {
+      transform: perspective(500px) rotateY(-55deg);
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 2</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">KNOCK KNOCK</h1>
+    <div class="door" id="door"><div class="door-panel"></div></div>
+    <p class="clue">Who's there?</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(2);
+    onDoubleTap(document.getElementById('door'), function () {
+      document.getElementById('door').classList.add('opened');
+      setTimeout(function () { completeLevel('shallow.html', 2); }, 500);
+    });
+  </script>
+</body>
+</html>

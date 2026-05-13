@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 20</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .og-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 38px);
+      gap: 4px;
+      user-select: none;
+    }
+    .og-cell {
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      background: var(--surface);
+      transition: background 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0;
+    }
+    .og-cell:active { background: var(--border); }
+    @keyframes wrongFlash {
+      0%,100% { background: var(--surface); }
+      50%     { background: rgba(220,38,38,0.15); }
+    }
+    .og-cell.wrong { animation: wrongFlash 0.3s ease; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 20</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <div class="og-grid" id="grid"></div>
+    <p class="clue">Something here is not what it seems.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(20);
+
+    var COLS = 7, ROWS = 7, TOTAL = COLS * ROWS;
+    /* place impostor away from edges */
+    var row = 1 + Math.floor(Math.random() * (ROWS - 2));
+    var col = 1 + Math.floor(Math.random() * (COLS - 2));
+    var TARGET = row * COLS + col;
+
+    var grid = document.getElementById('grid');
+    var done = false;
+
+    for (var i = 0; i < TOTAL; i++) {
+      var cell = document.createElement('div');
+      cell.className = 'og-cell';
+      cell.textContent = (i === TARGET) ? '0' : 'O';
+      cell.dataset.i = i;
+      cell.addEventListener('click', (function(idx, el) {
+        return function() {
+          if (done) return;
+          if (idx === TARGET) {
+            done = true;
+            el.style.background = 'var(--success)';
+            el.style.color = '#fff';
+            setTimeout(function () { completeLevel('wait.html', 20); }, 600);
+          } else {
+            el.classList.remove('wrong');
+            void el.offsetWidth;
+            el.classList.add('wrong');
+            setTimeout(function () { el.classList.remove('wrong'); }, 300);
+          }
+        };
+      })(i, cell));
+      grid.appendChild(cell);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 14</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .dot {
+      position: fixed;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--text);
+      pointer-events: none;
+      transition: background 0.2s;
+      z-index: 10;
+    }
+    .catch-area {
+      position: fixed;
+      inset: 0;
+      z-index: 9;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 14</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page" style="pointer-events:none">
+    <h1 class="title">CATCH ME IF YOU CAN</h1>
+    <p class="clue">It knows you're coming.</p>
+  </div>
+
+  <div class="catch-area" id="catchArea"></div>
+  <div class="dot" id="dot"></div>
+
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(14);
+
+    var dotEl   = document.getElementById('dot');
+    var pos     = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.6 };
+    var vel     = { x: 2, y: 1.5 };
+    var cursor  = { x: -999, y: -999 };
+    var caught  = false;
+
+    var EVADE_RADIUS = 110;
+    var EVADE_SPEED  = 9;
+    var NORMAL_SPEED = 2;
+    var DOT_R        = 8;
+    var HIT_R        = 22;
+
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+    function loop() {
+      if (caught) return;
+
+      var dx   = pos.x - cursor.x;
+      var dy   = pos.y - cursor.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < EVADE_RADIUS && dist > 0.1) {
+        var ang  = Math.atan2(dy, dx);
+        var spd  = EVADE_SPEED * (1 - dist / EVADE_RADIUS) + NORMAL_SPEED;
+        vel.x    = Math.cos(ang) * spd;
+        vel.y    = Math.sin(ang) * spd;
+      } else {
+        if (Math.random() < 0.03) {
+          vel.x += (Math.random() - 0.5) * 1.2;
+          vel.y += (Math.random() - 0.5) * 1.2;
+        }
+        var spd = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
+        if (spd > NORMAL_SPEED) {
+          vel.x = vel.x / spd * NORMAL_SPEED;
+          vel.y = vel.y / spd * NORMAL_SPEED;
+        }
+        if (spd < 0.5) {
+          vel.x = NORMAL_SPEED * (Math.random() - 0.5);
+          vel.y = NORMAL_SPEED * (Math.random() - 0.5);
+        }
+      }
+
+      pos.x += vel.x;
+      pos.y += vel.y;
+
+      var pad = DOT_R + 4;
+      if (pos.x < pad) { pos.x = pad; vel.x = Math.abs(vel.x); }
+      if (pos.x > window.innerWidth  - pad) { pos.x = window.innerWidth  - pad; vel.x = -Math.abs(vel.x); }
+      if (pos.y < pad + 60) { pos.y = pad + 60; vel.y = Math.abs(vel.y); }
+      if (pos.y > window.innerHeight - pad) { pos.y = window.innerHeight - pad; vel.y = -Math.abs(vel.y); }
+
+      dotEl.style.left = (pos.x - DOT_R) + 'px';
+      dotEl.style.top  = (pos.y - DOT_R) + 'px';
+
+      requestAnimationFrame(loop);
+    }
+
+    /* track cursor/finger */
+    document.addEventListener('mousemove', function (e) {
+      cursor.x = e.clientX; cursor.y = e.clientY;
+    });
+    document.addEventListener('touchmove', function (e) {
+      cursor.x = e.touches[0].clientX;
+      cursor.y = e.touches[0].clientY;
+    }, { passive: true });
+
+    /* tap/click to catch */
+    function tryClick(cx, cy) {
+      if (caught) return;
+      var dx = cx - pos.x;
+      var dy = cy - pos.y;
+      if (Math.sqrt(dx * dx + dy * dy) < HIT_R) {
+        caught = true;
+        dotEl.style.background = 'var(--success)';
+        setTimeout(function () { completeLevel('turn.html', 14); }, 500);
+      }
+    }
+
+    document.getElementById('catchArea').addEventListener('click', function (e) {
+      tryClick(e.clientX, e.clientY);
+    });
+    document.getElementById('catchArea').addEventListener('touchend', function (e) {
+      var t = e.changedTouches[0];
+      cursor.x = t.clientX; cursor.y = t.clientY;
+      tryClick(t.clientX, t.clientY);
+    }, { passive: true });
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

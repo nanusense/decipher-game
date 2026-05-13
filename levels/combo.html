@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 49</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .combo-target {
+      width: 140px; height: 140px; border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 0.4rem;
+      cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .combo-target.step1 { border-color: #eab308; }
+    .combo-target.step2 { border-color: #3b82f6; }
+    .combo-target.step3 { border-color: var(--success); background: rgba(5,150,105,0.06); }
+    .step-label { font-size: 0.65rem; letter-spacing: 0.12em; color: var(--muted); }
+    .step-icon  { font-size: 1.4rem; }
+    .steps-row  { display: flex; gap: 0.5rem; }
+    .step-pip   { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.2s; }
+    .step-pip.done { background: var(--success); }
+    .instruction { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; min-height: 1.4em; text-align: center; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 49</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">THE COMBO</h1>
+
+    <div class="combo-target" id="ct">
+      <span class="step-icon" id="stepIcon">○</span>
+      <span class="step-label" id="stepLabel">STEP 1 OF 3</span>
+    </div>
+
+    <div class="steps-row">
+      <div class="step-pip" id="pip0"></div>
+      <div class="step-pip" id="pip1"></div>
+      <div class="step-pip" id="pip2"></div>
+    </div>
+
+    <p class="instruction" id="instr">Double-tap the circle.</p>
+    <p class="clue">Three moves. One lock.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(49);
+
+    var ct     = document.getElementById('ct');
+    var icon   = document.getElementById('stepIcon');
+    var label  = document.getElementById('stepLabel');
+    var instr  = document.getElementById('instr');
+    var step   = 0;
+
+    var STEPS = [
+      { hint: 'Double-tap the circle.',   icon: '◎', cls: 'step1' },
+      { hint: 'Now hold it for 2 seconds.', icon: '◉', cls: 'step2' },
+      { hint: 'Swipe right across it.',    icon: '●', cls: 'step3' },
+    ];
+
+    function advance() {
+      document.getElementById('pip' + step).classList.add('done');
+      step++;
+      if (step >= STEPS.length) {
+        icon.textContent  = '✓';
+        label.textContent = 'UNLOCKED';
+        instr.textContent = '';
+        setTimeout(function () { completeLevel('finale.html', 49); }, 700);
+        return;
+      }
+      ct.className = 'combo-target ' + STEPS[step].cls;
+      icon.textContent  = STEPS[step].icon;
+      label.textContent = 'STEP ' + (step + 1) + ' OF 3';
+      instr.textContent = STEPS[step].hint;
+    }
+
+    /* Step 1: double-tap */
+    onDoubleTap(ct, function () { if (step === 0) advance(); });
+
+    /* Step 2: long press 2s */
+    onLongPress(ct, 2000, function () { if (step === 1) advance(); });
+
+    /* Step 3: swipe right */
+    onSwipe(ct, 'right', function () { if (step === 2) advance(); });
+
+    /* desktop fallback for step 3 */
+    var swipeStartX = null;
+    ct.addEventListener('mousedown', function (e) { swipeStartX = e.clientX; });
+    ct.addEventListener('mouseup',   function (e) {
+      if (swipeStartX !== null && e.clientX - swipeStartX > 60 && step === 2) advance();
+      swipeStartX = null;
+    });
+
+    /* init */
+    ct.className = 'combo-target ' + STEPS[0].cls;
+    icon.textContent  = STEPS[0].icon;
+    instr.textContent = STEPS[0].hint;
+  </script>
+</body>
+</html>

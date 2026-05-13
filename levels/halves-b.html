@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 46b</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .half-box {
+      width: 180px; height: 100px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem; letter-spacing: 0.2em; color: var(--text);
+      position: relative;
+    }
+    .half-label { position: absolute; top: 6px; left: 10px; font-size: 0.55rem; color: var(--muted); letter-spacing: 0.1em; }
+    .back-link { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em; text-decoration: none; border-bottom: 1px solid var(--border); }
+    .back-link:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 46</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">OTHER SIDE</h1>
+    <div class="half-box">
+      <span class="half-label">THIS PAGE</span>
+      CE
+    </div>
+    <a href="halves.html" class="back-link" id="backBtn">← bring it back</a>
+    <p class="clue">Now you have both pieces.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    sessionStorage.setItem('halvesB', 'CE');
+    document.getElementById('backBtn').addEventListener('click', function () {
+      window.location.href = 'halves.html';
+    });
+  </script>
+</body>
+</html>

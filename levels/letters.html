@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 11</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .para { font-size: 0.88rem; line-height: 2; color: var(--text); max-width: 380px; text-align: left; }
+    .para span.first { }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 11</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <p class="para">
+      <span class="first">A</span>ncient maps once pointed the way.<br>
+      <span class="first">H</span>idden within the simplest things is truth.<br>
+      <span class="first">E</span>ven now you are closer than you think.<br>
+      <span class="first">A</span>ll paths lead here eventually.<br>
+      <span class="first">D</span>awn breaks for those who persevere.
+    </p>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">Every line begins somewhere.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(11);
+    bindAnswer('ans', 'ahead', 'source.html', 11);
+  </script>
+</body>
+</html>

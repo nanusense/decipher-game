@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0">
+  <title>DECIPHER — 8</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .micro-btn {
+      position: absolute;
+      top: 340px;
+      left: 78%;
+      font-size: 2px;
+      color: #555;
+      background: transparent;
+      border: none;
+      font-family: var(--font);
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      padding: 12px;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 8</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <p class="clue">The truth is small.</p>
+  </div>
+  <button class="micro-btn" id="micro">TAP HERE TO PROCEED</button>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(8);
+    document.getElementById('micro').addEventListener('click', function () {
+      completeLevel('sequence.html', 8);
+    });
+  </script>
+</body>
+</html>

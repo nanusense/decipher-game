@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 39</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .canvas-wrap { position: relative; display: inline-block; }
+    .reset-btn { font-size: 0.65rem; letter-spacing: 0.1em; }
+    .status-txt { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.08em; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 39</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">CONNECT</h1>
+    <div class="canvas-wrap">
+      <canvas id="cv" width="280" height="220"></canvas>
+    </div>
+    <p class="status-txt" id="status">tap the dots in order: 1 → 2 → 3 → 4</p>
+    <button class="btn reset-btn" id="resetBtn">RESET</button>
+    <p class="clue">Complete the picture.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(39);
+
+    var cv     = document.getElementById('cv');
+    var ctx    = cv.getContext('2d');
+    var status = document.getElementById('status');
+
+    /* Dots form an arrow pointing right */
+    var dots = [
+      { x: 40,  y: 110, label: '1' },
+      { x: 140, y: 40,  label: '2' },
+      { x: 240, y: 110, label: '3' },
+      { x: 140, y: 180, label: '4' },
+    ];
+
+    var nextIdx = 0;
+    var lines   = [];
+
+    function draw() {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+
+      /* drawn lines */
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth   = 2;
+      lines.forEach(function (l) {
+        ctx.beginPath();
+        ctx.moveTo(l.x1, l.y1);
+        ctx.lineTo(l.x2, l.y2);
+        ctx.stroke();
+      });
+
+      /* dots */
+      dots.forEach(function (d, i) {
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, 12, 0, Math.PI * 2);
+        ctx.fillStyle = i < nextIdx ? '#059669' : '#f9fafb';
+        ctx.fill();
+        ctx.strokeStyle = i < nextIdx ? '#059669' : '#111';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle   = i < nextIdx ? '#fff' : '#111';
+        ctx.font        = '11px Courier New';
+        ctx.textAlign   = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(d.label, d.x, d.y);
+      });
+    }
+
+    function getPos(e) {
+      var r = cv.getBoundingClientRect();
+      var cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      var cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+      return { x: cx * (cv.width / r.width), y: cy * (cv.height / r.height) };
+    }
+
+    function handleTap(e) {
+      e.preventDefault();
+      var pos = getPos(e);
+      var d   = dots[nextIdx];
+      var dist = Math.hypot(pos.x - d.x, pos.y - d.y);
+      if (dist < 22) {
+        if (nextIdx > 0) {
+          var prev = dots[nextIdx - 1];
+          lines.push({ x1: prev.x, y1: prev.y, x2: d.x, y2: d.y });
+        }
+        nextIdx++;
+        draw();
+        if (nextIdx === dots.length) {
+          /* close the shape */
+          var last = dots[dots.length - 1], first = dots[0];
+          lines.push({ x1: last.x, y1: last.y, x2: first.x, y2: first.y });
+          draw();
+          status.textContent = '✓';
+          status.style.color = 'var(--success)';
+          setTimeout(function () { completeLevel('inspect.html', 39); }, 700);
+        } else {
+          status.textContent = 'next: ' + (nextIdx + 1);
+        }
+      }
+    }
+
+    cv.addEventListener('click',      handleTap);
+    cv.addEventListener('touchstart', handleTap, { passive: false });
+
+    document.getElementById('resetBtn').addEventListener('click', function () {
+      nextIdx = 0; lines = [];
+      status.textContent = 'tap the dots in order: 1 → 2 → 3 → 4';
+      status.style.color = '';
+      draw();
+    });
+
+    draw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 41</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .simon-status { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.12em; min-height: 1.2em; }
+    .round-info   { font-size: 0.65rem; color: var(--border); letter-spacing: 0.1em; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 41</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">MEMORY</h1>
+    <p class="round-info" id="roundInfo">WATCH THE SEQUENCE</p>
+    <div class="simon-grid">
+      <button class="simon-btn" data-color="red"    id="red"></button>
+      <button class="simon-btn" data-color="blue"   id="blue"></button>
+      <button class="simon-btn" data-color="green"  id="green"></button>
+      <button class="simon-btn" data-color="yellow" id="yellow"></button>
+    </div>
+    <p class="simon-status" id="simStatus">Get ready…</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(41);
+
+    var SEQ     = ['blue','red','green','blue'];
+    var btns    = { red: document.getElementById('red'), blue: document.getElementById('blue'), green: document.getElementById('green'), yellow: document.getElementById('yellow') };
+    var status  = document.getElementById('simStatus');
+    var info    = document.getElementById('roundInfo');
+    var playerIdx = 0;
+    var accepting = false;
+
+    function light(color, ms) {
+      return new Promise(function (res) {
+        btns[color].classList.add('lit');
+        setTimeout(function () { btns[color].classList.remove('lit'); setTimeout(res, 100); }, ms);
+      });
+    }
+
+    async function playSequence() {
+      accepting = false;
+      info.textContent = 'WATCH';
+      status.textContent = '';
+      for (var i = 0; i < SEQ.length; i++) {
+        await new Promise(function (r) { setTimeout(r, 400); });
+        await light(SEQ[i], 500);
+      }
+      accepting   = true;
+      playerIdx   = 0;
+      info.textContent    = 'YOUR TURN';
+      status.textContent  = 'repeat the sequence';
+    }
+
+    Object.keys(btns).forEach(function (color) {
+      btns[color].addEventListener('click', function () {
+        if (!accepting) return;
+        light(color, 200);
+        if (color === SEQ[playerIdx]) {
+          playerIdx++;
+          if (playerIdx === SEQ.length) {
+            accepting = false;
+            status.textContent = '✓';
+            info.textContent   = 'CORRECT';
+            setTimeout(function () { completeLevel('grid.html', 41); }, 700);
+          }
+        } else {
+          accepting = false;
+          status.textContent = 'wrong — replaying';
+          status.style.color = 'var(--danger)';
+          setTimeout(function () { status.style.color = ''; playSequence(); }, 1200);
+        }
+      });
+    });
+
+    setTimeout(playSequence, 800);
+  </script>
+</body>
+</html>

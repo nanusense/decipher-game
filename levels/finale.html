@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>level-50.html</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .finale-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem; width: 100%; max-width: 360px;
+    }
+    .clue-box {
+      border: 1px solid var(--border); padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
+      background: var(--surface);
+    }
+    .clue-box-label { font-size: 0.55rem; letter-spacing: 0.15em; color: var(--muted); }
+    .clue-box-value { font-size: 1rem; letter-spacing: 0.1em; color: var(--text); }
+
+    /* clue A: page title contains "50" */
+    /* clue B: tiny invisible text */
+    .micro { font-size: 3px; color: rgba(0,0,0,0.04); user-select: text; }
+
+    /* clue C: white-on-white */
+    .white-word { color: #fff; background: #fff; user-select: text; font-size: 1rem; letter-spacing: 0.1em; display: inline; }
+
+    /* clue D: mirrored */
+    .mirrored-sm { display: inline-block; transform: scaleX(-1); font-size: 1rem; letter-spacing: 0.1em; }
+
+    .finale-hint { font-size: 0.65rem; color: var(--border); letter-spacing: 0.08em; text-align: center; }
+    .answer-big {
+      width: 100%; max-width: 300px;
+      background: transparent; border: none;
+      border-bottom: 2px solid var(--text);
+      font-family: var(--font); font-size: 1.2rem;
+      letter-spacing: 0.15em; text-align: center;
+      padding: 0.5rem 0; outline: none; color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 50</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">THE FINALE</h1>
+    <p class="clue" style="max-width:340px">
+      Four clues. One word. You've seen them all before.
+    </p>
+
+    <div class="finale-grid">
+      <!-- A: browser tab -->
+      <div class="clue-box">
+        <span class="clue-box-label">A — ABOVE YOU</span>
+        <span class="clue-box-value" style="color:var(--muted)">look up</span>
+      </div>
+
+      <!-- B: zoom in -->
+      <div class="clue-box">
+        <span class="clue-box-label">B — MICROSCOPIC</span>
+        <span class="clue-box-value">
+          <span class="micro">OPEN</span>
+          <span style="font-size:0.6rem;color:var(--border)">[zoom in]</span>
+        </span>
+      </div>
+
+      <!-- C: invisible ink -->
+      <div class="clue-box" style="background:#fff">
+        <span class="clue-box-label" style="color:#ccc">C — INVISIBLE</span>
+        <span class="white-word">OPEN</span>
+      </div>
+
+      <!-- D: mirror -->
+      <div class="clue-box">
+        <span class="clue-box-label">D — MIRROR</span>
+        <span class="clue-box-value"><span class="mirrored-sm">NEPO</span></span>
+      </div>
+    </div>
+
+    <p class="finale-hint">A + B + C + D all say the same thing.</p>
+
+    <input class="answer-big" id="ans" type="text" placeholder="the word is…"
+           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+
+    <p class="clue" style="margin-top:0.5rem">It was always this simple.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(50);
+    var ans = document.getElementById('ans');
+    ans.addEventListener('input', function () {
+      if (ans.value.trim().toLowerCase() === 'open') {
+        ans.value = '';
+        completeLevel('../victory.html', 50);
+      }
+    });
+    ans.focus();
+  </script>
+</body>
+</html>

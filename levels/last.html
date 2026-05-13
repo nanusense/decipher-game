@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 31</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .poem { font-size: 0.88rem; line-height: 2.4; text-align: left; max-width: 360px; }
+    .poem span.last { color: var(--accent); font-weight: bold; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 31</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">LAST LETTERS</h1>
+    <div class="poem">
+      Every secret hides inside a worD<br>
+      Edges blur when shadows grow widE<br>
+      Patterns shift beneath the surfacE<br>
+      Truth remains when all else is goT<br>
+      Hidden answers wait for those who looH
+    </div>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">The end is the beginning.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(31);
+    bindAnswer('ans', 'depth', 'numbers.html', 31);
+  </script>
+</body>
+</html>

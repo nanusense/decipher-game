@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 48</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .clock-face {
+      font-size: 3.5rem; letter-spacing: 0.05em;
+      font-variant-numeric: tabular-nums;
+    }
+    .secret-btn {
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+      margin-top: 1rem;
+    }
+    .secret-btn.visible { opacity: 1; pointer-events: all; }
+    .hint-txt { font-size: 0.65rem; color: var(--border); letter-spacing: 0.1em; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 48</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">THE 17th SECOND</h1>
+    <div class="clock-face" id="clockFace">--:--:--</div>
+    <button class="btn btn-accent secret-btn" id="secretBtn">NOW</button>
+    <p class="hint-txt" id="hintTxt">watch the clock…</p>
+    <p class="clue">Timing is everything.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(48);
+    var face   = document.getElementById('clockFace');
+    var btn    = document.getElementById('secretBtn');
+    var hint   = document.getElementById('hintTxt');
+
+    setInterval(function () {
+      var now = new Date();
+      var h = String(now.getHours()).padStart(2,'0');
+      var m = String(now.getMinutes()).padStart(2,'0');
+      var s = String(now.getSeconds()).padStart(2,'0');
+      face.textContent = h + ':' + m + ':' + s;
+
+      var sec = now.getSeconds();
+      if (sec >= 17 && sec <= 19) {
+        btn.classList.add('visible');
+        hint.textContent = '← tap it!';
+      } else {
+        btn.classList.remove('visible');
+        hint.textContent = 'watch the clock…';
+      }
+    }, 250);
+
+    btn.addEventListener('click', function () {
+      completeLevel('combo.html', 48);
+    });
+  </script>
+</body>
+</html>

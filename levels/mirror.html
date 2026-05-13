@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 25</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .mirrored {
+      font-size: 2rem; letter-spacing: 0.15em;
+      transform: scaleX(-1);
+      display: inline-block;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 25</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">MIRROR</h1>
+    <span class="mirrored">TCELFER</span>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">Reflect on it.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(25);
+    bindAnswer('ans', 'reflect', 'morse.html', 25);
+  </script>
+</body>
+</html>

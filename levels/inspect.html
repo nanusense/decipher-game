@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 40</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .box {
+      width: 220px; height: 100px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; color: var(--muted); letter-spacing: 0.08em;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 40</span>
+  <a href="../index.html" class="home-link">HOME</a>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal-box">
+      <button class="modal-close" id="closeModal">✕</button>
+      <div style="font-size:0.65rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.5rem">ELEMENT INSPECTOR</div>
+      <pre class="modal-code">&lt;div
+  id="box"
+  class="box"
+  <span class="hl">data-secret="enter"</span>
+&gt;
+  A box. Nothing more.
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+
+  <div class="page">
+    <h1 class="title">THE INSPECTOR</h1>
+    <div class="box" id="box" data-secret="enter">A box. Nothing more.</div>
+    <button class="btn" id="inspectBtn">INSPECT</button>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">Inspect what lies beneath the surface.</p>
+  </div>
+
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(40);
+    document.getElementById('inspectBtn').addEventListener('click', function () {
+      document.getElementById('modal').classList.add('open');
+    });
+    document.getElementById('closeModal').addEventListener('click', function () {
+      document.getElementById('modal').classList.remove('open');
+    });
+    bindAnswer('ans', 'enter', 'memory.html', 40);
+  </script>
+</body>
+</html>

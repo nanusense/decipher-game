@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 12</title>
+  <link rel="stylesheet" href="../style.css">
+  <!-- the password is: echo -->
+</head>
+<body>
+  <span class="badge">LEVEL 12</span>
+  <a href="../index.html" class="home-link">HOME</a>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal-box">
+      <button class="modal-close" id="closeModal">✕</button>
+      <div style="font-size:0.65rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.5rem">PAGE SOURCE</div>
+      <pre class="modal-code">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;DECIPHER — 12&lt;/title&gt;
+  &lt;link rel="stylesheet" href="../style.css"&gt;
+  &lt;!-- the password is: echo --&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;span class="badge"&gt;LEVEL 12&lt;/span&gt;
+  &lt;a href="../index.html" class="home-link"&gt;HOME&lt;/a&gt;
+  &lt;div class="page"&gt;
+    &lt;p class="clue"&gt;Look under the hood.&lt;/p&gt;
+    &lt;button class="btn" id="viewSrc"&gt;&amp;lt; / &amp;gt;&lt;/button&gt;
+    &lt;div class="answer-wrap"&gt;
+      &lt;input class="answer-input" id="ans"
+             type="text" placeholder="…"&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;script src="../utils.js"&gt;&lt;/script&gt;
+  &lt;script&gt;
+    trackProgress(12);
+    bindAnswer('ans', '???', 'triple.html', 12);
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+    </div>
+  </div>
+
+  <div class="page">
+    <p class="clue">Look under the hood.</p>
+    <button class="btn" id="viewSrc">&lt; / &gt;</button>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+  </div>
+
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(12);
+    document.getElementById('viewSrc').addEventListener('click', function () {
+      document.getElementById('modal').classList.add('open');
+    });
+    document.getElementById('closeModal').addEventListener('click', function () {
+      document.getElementById('modal').classList.remove('open');
+    });
+    bindAnswer('ans', 'echo', 'triple.html', 12);
+  </script>
+</body>
+</html>

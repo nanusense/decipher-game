@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 36</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .encoded { font-size: 2rem; letter-spacing: 0.25em; color: var(--text); }
+    .shift-hint { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.12em; }
+    .alpha-row {
+      font-size: 0.58rem; color: var(--border);
+      letter-spacing: 0.06em; text-align: center; line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 36</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">CAESAR</h1>
+    <div class="encoded">IRUZDUG</div>
+    <p class="shift-hint">— shift of III —</p>
+    <p class="alpha-row">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z<br>
+    D E F G H I J K L M N O P Q R S T U V W X Y Z A B C</p>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <p class="clue">Julius knew.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(36);
+    /* IRUZDUG shifted back 3 = FORWARD */
+    bindAnswer('ans', 'forward', 'hex.html', 36);
+  </script>
+</body>
+</html>

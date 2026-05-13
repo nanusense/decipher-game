@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER — 23</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .url-example {
+      font-size: 0.78rem; background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem; letter-spacing: 0.03em;
+      color: var(--muted); max-width: 360px;
+      word-break: break-all; line-height: 1.6;
+    }
+    .url-example em { color: var(--accent); font-style: normal; }
+  </style>
+</head>
+<body>
+  <span class="badge">LEVEL 23</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <h1 class="title">QUESTION MARK</h1>
+    <div class="url-example">
+      …/query.html<em>?found=true</em>
+    </div>
+    <p class="clue">Ask the right question.<br>Add it to the address bar.</p>
+  </div>
+  <script src="../utils.js"></script>
+  <script>
+    trackProgress(23);
+    if (new URLSearchParams(location.search).get('found') === 'true') {
+      completeLevel('fragment.html', 23);
+    }
+  </script>
+</body>
+</html>
