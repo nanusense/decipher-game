@@ -10,49 +10,100 @@
       background: var(--surface);
       border: 2px solid var(--border);
       border-radius: 8px;
-      padding: 1.5rem 2rem;
+      padding: 1.8rem 2.2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1.2rem;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      gap: 1.6rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
     }
+
     .dials { display: flex; gap: 1rem; align-items: center; }
-    .dial {
-      display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
-    }
-    .dial-btn {
-      background: none; border: none; cursor: pointer;
-      font-size: 0.8rem; color: var(--muted); padding: 0.3rem 0.6rem;
-      -webkit-tap-highlight-color: transparent;
-      transition: color 0.15s;
-    }
-    .dial-btn:active { color: var(--text); }
-    .dial-display {
-      width: 52px; height: 64px;
+    .dial-sep { font-size: 1.4rem; color: var(--border); margin-top: 4px; }
+
+    /* ── Drum ── */
+    .drum {
+      width: 62px;
+      height: 168px;          /* 3 × 56px slots */
+      position: relative;
+      overflow: hidden;
       border: 2px solid var(--border);
-      border-radius: 4px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; letter-spacing: 0;
+      border-radius: 6px;
       background: #fff;
-      user-select: none;
-      transition: border-color 0.2s;
+      cursor: grab;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
     }
-    .dial-separator { font-size: 1.5rem; color: var(--border); margin-bottom: 0.5rem; }
+    .drum:active { cursor: grabbing; }
+
+    /* selection band — two horizontal rules */
+    .drum::before {
+      content: '';
+      position: absolute;
+      left: 6px; right: 6px;
+      top: 50%; transform: translateY(-50%);
+      height: 56px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* fade top & bottom */
+    .drum::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.88) 0%,
+        transparent 28%,
+        transparent 72%,
+        rgba(255,255,255,0.88) 100%
+      );
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .drum-inner {
+      position: absolute;
+      left: 0; right: 0;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      will-change: transform;
+    }
+
+    .drum-digit {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      font-family: var(--font);
+      color: var(--text);
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    /* success state */
+    .dials.correct .drum { border-color: var(--success); }
+    .dials.correct .drum::before { border-color: var(--success); }
+
     .lock-icon {
       font-size: 2rem; cursor: pointer;
       transition: transform 0.2s;
       -webkit-tap-highlight-color: transparent;
     }
     .lock-icon:active { transform: scale(0.92); }
-    .lock-msg { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; min-height: 1em; }
-    .dials.correct .dial-display { border-color: var(--success); }
+    .lock-msg { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.12em; min-height: 1em; }
+
     @keyframes shake {
       0%,100% { transform: translateX(0); }
-      25%      { transform: translateX(-6px); }
-      75%      { transform: translateX(6px); }
+      25%      { transform: translateX(-7px); }
+      75%      { transform: translateX(7px); }
     }
-    .shake { animation: shake 0.3s ease; }
+    .shake { animation: shake 0.32s ease; }
   </style>
 </head>
 <body>
@@ -61,25 +112,7 @@
   <div class="page">
     <h1 class="title">CALL THE DEVIL</h1>
     <div class="lock-body" id="lockBody">
-      <div class="dials" id="dials">
-        <div class="dial" data-index="0">
-          <button class="dial-btn up">▲</button>
-          <div class="dial-display" id="d0">0</div>
-          <button class="dial-btn down">▼</button>
-        </div>
-        <div class="dial-separator">·</div>
-        <div class="dial" data-index="1">
-          <button class="dial-btn up">▲</button>
-          <div class="dial-display" id="d1">0</div>
-          <button class="dial-btn down">▼</button>
-        </div>
-        <div class="dial-separator">·</div>
-        <div class="dial" data-index="2">
-          <button class="dial-btn up">▲</button>
-          <div class="dial-display" id="d2">0</div>
-          <button class="dial-btn down">▼</button>
-        </div>
-      </div>
+      <div class="dials" id="dials"></div>
       <div class="lock-icon" id="lockIcon">🔒</div>
       <div class="lock-msg" id="lockMsg"></div>
     </div>
@@ -88,45 +121,133 @@
   <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(11);
-    var values = [0, 0, 0];
-    var TARGET = [6, 6, 6];
+
+    var SLOT    = 56;           // px per digit slot
+    var REPS    = 3;            // how many times 0-9 is repeated
+    var TOTAL   = 10 * REPS;   // 30 items
+    var MID     = 10;           // start in the middle group
+    var TARGET  = [6, 6, 6];
+    var values  = [0, 0, 0];
     var unlocked = false;
 
-    function updateDisplay() {
-      for (var i = 0; i < 3; i++) {
-        document.getElementById('d' + i).textContent = values[i];
+    /* ── translateY to center item [idx] in the 3-slot window ── */
+    function yFor(idx) { return SLOT - idx * SLOT; }   /* = SLOT*(1-idx) */
+
+    /* ── clamp index inside [1 … TOTAL-2] so prev/next always exist ── */
+    function clampIdx(i) { return Math.max(1, Math.min(TOTAL - 2, i)); }
+
+    function createDrum(dialIndex) {
+      var wrap  = document.createElement('div');
+      wrap.className = 'drum';
+      var inner = document.createElement('div');
+      inner.className = 'drum-inner';
+
+      /* 30 digit elements */
+      for (var r = 0; r < REPS; r++) {
+        for (var d = 0; d < 10; d++) {
+          var el = document.createElement('div');
+          el.className = 'drum-digit';
+          el.textContent = d;
+          inner.appendChild(el);
+        }
       }
+      wrap.appendChild(inner);
+
+      /* state */
+      var s = {
+        idx:       MID + values[dialIndex],
+        translate: 0,   /* mirrors current CSS translateY */
+        startY:    null,
+        startTr:   null,
+        dragging:  false
+      };
+      s.translate = yFor(s.idx);
+      inner.style.transform = 'translateY(' + s.translate + 'px)';
+
+      function snap(rawIdx) {
+        var idx = clampIdx(Math.round(rawIdx));
+        s.idx = idx;
+        values[dialIndex] = idx % 10;
+        s.translate = yFor(idx);
+        inner.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.8, 0.35, 1)';
+        inner.style.transform  = 'translateY(' + s.translate + 'px)';
+        setTimeout(function () { inner.style.transition = ''; }, 240);
+      }
+
+      function idxFromTranslate(tr) { return (SLOT - tr) / SLOT; }
+
+      /* ── touch ── */
+      wrap.addEventListener('touchstart', function (e) {
+        if (unlocked) return;
+        e.preventDefault();
+        inner.style.transition = '';
+        s.startY  = e.touches[0].clientY;
+        s.startTr = s.translate;
+        s.dragging = true;
+      }, { passive: false });
+
+      wrap.addEventListener('touchmove', function (e) {
+        if (!s.dragging) return;
+        e.preventDefault();
+        var dy = e.touches[0].clientY - s.startY;
+        s.translate = s.startTr + dy;
+        inner.style.transform = 'translateY(' + s.translate + 'px)';
+      }, { passive: false });
+
+      wrap.addEventListener('touchend', function (e) {
+        if (!s.dragging) return;
+        s.dragging = false;
+        snap(idxFromTranslate(s.translate));
+      });
+
+      /* ── mouse drag (desktop) ── */
+      wrap.addEventListener('mousedown', function (e) {
+        if (unlocked) return;
+        inner.style.transition = '';
+        s.startY  = e.clientY;
+        s.startTr = s.translate;
+        s.dragging = true;
+
+        function onMove(ev) {
+          if (!s.dragging) return;
+          var dy = ev.clientY - s.startY;
+          s.translate = s.startTr + dy;
+          inner.style.transform = 'translateY(' + s.translate + 'px)';
+        }
+        function onUp(ev) {
+          if (!s.dragging) return;
+          s.dragging = false;
+          snap(idxFromTranslate(s.translate));
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+
+      /* ── scroll wheel (desktop) ── */
+      wrap.addEventListener('wheel', function (e) {
+        if (unlocked) return;
+        e.preventDefault();
+        snap(s.idx + (e.deltaY > 0 ? 1 : -1));
+      }, { passive: false });
+
+      return wrap;
     }
 
-    document.querySelectorAll('.dial').forEach(function (dial) {
-      var idx = parseInt(dial.dataset.index);
-      dial.querySelector('.up').addEventListener('click', function () {
-        if (unlocked) return;
-        values[idx] = (values[idx] + 1) % 10;
-        updateDisplay();
-      });
-      dial.querySelector('.down').addEventListener('click', function () {
-        if (unlocked) return;
-        values[idx] = (values[idx] + 9) % 10;
-        updateDisplay();
-      });
+    /* build 3 drums */
+    var dialsEl = document.getElementById('dials');
+    for (var i = 0; i < 3; i++) {
+      if (i > 0) {
+        var sep = document.createElement('div');
+        sep.className = 'dial-sep';
+        sep.textContent = '·';
+        dialsEl.appendChild(sep);
+      }
+      dialsEl.appendChild(createDrum(i));
+    }
 
-      /* swipe up/down on dial display */
-      var startY = null;
-      var display = dial.querySelector('.dial-display');
-      display.addEventListener('touchstart', function (e) { startY = e.touches[0].clientY; }, { passive: true });
-      display.addEventListener('touchend', function (e) {
-        if (startY === null) return;
-        var dy = startY - e.changedTouches[0].clientY;
-        if (Math.abs(dy) > 10) {
-          if (dy > 0) { values[idx] = (values[idx] + 1) % 10; }
-          else        { values[idx] = (values[idx] + 9) % 10; }
-          updateDisplay();
-        }
-        startY = null;
-      }, { passive: true });
-    });
-
+    /* lock button */
     document.getElementById('lockIcon').addEventListener('click', function () {
       if (unlocked) return;
       if (values[0] === TARGET[0] && values[1] === TARGET[1] && values[2] === TARGET[2]) {
@@ -134,7 +255,7 @@
         document.getElementById('lockIcon').textContent = '🔓';
         document.getElementById('dials').classList.add('correct');
         document.getElementById('lockMsg').textContent = 'unlocked';
-        setTimeout(function () { completeLevel('hunt.html', 11); }, 800);
+        setTimeout(function () { completeLevel('hunt.html', 11); }, 900);
       } else {
         var lb = document.getElementById('lockBody');
         lb.classList.remove('shake');
