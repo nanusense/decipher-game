@@ -1,3 +1,10 @@
+/* inject favicon on every level page */
+(function () {
+  var lnk = document.createElement('link');
+  lnk.rel = 'icon'; lnk.type = 'image/svg+xml'; lnk.href = '../favicon.svg';
+  document.head.appendChild(lnk);
+})();
+
 /* clear stale progress if game version changed */
 (function () {
   if (localStorage.getItem('decipherVersion') !== '3') {
