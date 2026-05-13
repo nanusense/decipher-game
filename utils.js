@@ -6,16 +6,16 @@ var LEVEL_URLS = [
   'deep.html',      /* 3  — scroll to bottom */
   'hold.html',      /* 4  — long press 2s */
   'ink.html',       /* 5  — invisible ink */
-  'level7.html',    /* 6  — URL number change */
-  'tiny.html',      /* 7  — zoom to read */
-  'sequence.html',  /* 8  — click in order */
-  'sesame.html',    /* 9  — type a word */
-  'letters.html',   /* 10 — acrostic */
-  'source.html',    /* 11 — view source */
-  'triple.html',    /* 12 — combination lock */
-  'hunt.html',      /* 13 — catch the dot */
-  'turn.html',      /* 14 — orientation */
-  'shallow.html',   /* 15 — URL word swap */
+  'tiny.html',      /* 6  — zoom to read */
+  'sequence.html',  /* 7  — click in order */
+  'sesame.html',    /* 8  — type a word */
+  'letters.html',   /* 9  — acrostic */
+  'source.html',    /* 10 — view source */
+  'triple.html',    /* 11 — combination lock */
+  'hunt.html',      /* 12 — catch the dot */
+  'turn.html',      /* 13 — orientation */
+  'shallow.html',   /* 14 — URL word swap */
+  'level7.html',    /* 15 — URL number change */
   'blind.html',     /* 16 — shake */
   'pattern.html',   /* 17 — dot pattern */
   'count.html',     /* 18 — exact count */

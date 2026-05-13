@@ -47,8 +47,8 @@
   <script>
     /* if reached from level 15 URL puzzle, skip straight to next level */
     var saved = parseInt(localStorage.getItem('decipherProgress') || '0');
-    if (saved >= 14) {
-      completeLevel('blind.html', 15);
+    if (saved >= 13) {
+      completeLevel('level7.html', 14);
     } else {
       trackProgress(3);
       var area = document.getElementById('surfaceArea');
