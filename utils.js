@@ -1,3 +1,11 @@
+/* clear stale progress if game version changed */
+(function () {
+  if (localStorage.getItem('decipherVersion') !== '3') {
+    localStorage.removeItem('decipherProgress');
+    localStorage.setItem('decipherVersion', '3');
+  }
+})();
+
 /* URL for each level (index = level number). Used by index.html for Resume. */
 var LEVEL_URLS = [
   null,             /* 0  */

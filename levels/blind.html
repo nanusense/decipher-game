@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DECIPHER</title>
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../style.css?v=3">
   <style>
     @keyframes pageShake {
       0%,100% { transform: translateX(0); }
@@ -26,6 +26,14 @@
       transform: scale(1);
       pointer-events: auto;
     }
+    #fallback {
+      position: fixed; bottom: 3rem; left: 0; right: 0;
+      text-align: center;
+      font-size: 0.6rem; letter-spacing: 0.1em;
+      color: var(--muted);
+      opacity: 0; transition: opacity 0.5s;
+    }
+    #fallback a { color: var(--muted); text-decoration: underline; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -35,7 +43,8 @@
     <p class="clue" style="font-size:1.1rem">'Cause the players gonna play, play, play, play, play<br>And the haters gonna hate, hate, hate, hate, hate<br>Baby, I'm just gonna…</p>
     <button class="btn btn-accent" id="goBtn">CONTINUE</button>
   </div>
-  <script src="../utils.js"></script>
+  <div id="fallback">try shaking your device &nbsp;·&nbsp; <a id="skipLink">not working?</a></div>
+  <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(16);
 
@@ -94,6 +103,15 @@
 
     document.getElementById('goBtn').addEventListener('click', function () {
       completeLevel('pattern.html', 16);
+    });
+
+    /* timed fallback — show hint + skip after 20s */
+    var fallbackEl = document.getElementById('fallback');
+    setTimeout(function () {
+      fallbackEl.style.opacity = '1';
+    }, 20000);
+    document.getElementById('skipLink').addEventListener('click', function () {
+      trigger();
     });
   </script>
 </body>
