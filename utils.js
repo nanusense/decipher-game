@@ -3,7 +3,7 @@ var LEVEL_URLS = [
   null,             /* 0  */
   'start.html',     /* 1  — click the orb */
   'door.html',      /* 2  — double-tap */
-  'deep.html',      /* 3  — scroll to bottom */
+  'ocean.html',     /* 3  — scroll to bottom */
   'hold.html',      /* 4  — long press 2s */
   'ink.html',       /* 5  — invisible ink */
   'tiny.html',      /* 6  — zoom to read */

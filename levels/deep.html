@@ -5,64 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DECIPHER</title>
   <link rel="stylesheet" href="../style.css">
-  <style>
-    .shaft { display: flex; flex-direction: column; align-items: center; gap: 3.5rem; padding: 1rem 0 5rem; width: 100%; }
-    .depth-label { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--border); }
-    .depth-note  { font-size: 0.7rem; color: var(--border); }
-  </style>
 </head>
 <body>
-  <span class="badge">LEVEL 3</span>
-  <a href="../index.html" class="home-link">HOME</a>
-
-  <div style="text-align:center;padding:4rem 1.5rem 2rem">
-    <h1 class="title">THE DEEP</h1>
-    <p class="clue" style="margin-top:1rem">Go deeper.</p>
-  </div>
-
-  <div class="shaft">
-    <div class="depth-label">— 10 m —</div>
-    <div class="depth-note">nothing here</div>
-    <div class="depth-label">— 50 m —</div>
-    <div class="depth-note">keep going</div>
-    <div class="depth-label">— 200 m —</div>
-    <div class="depth-note">the pressure builds</div>
-    <div class="depth-label">— 500 m —</div>
-    <div class="depth-note">almost no light</div>
-    <div class="depth-label">— 1000 m —</div>
-    <div class="depth-note">complete darkness</div>
-    <div class="depth-label">— 2000 m —</div>
-    <div class="depth-note">you should not be here</div>
-    <div class="depth-label">— 4000 m —</div>
-    <div class="depth-note">and yet you are</div>
-    <div class="depth-label">— BOTTOM —</div>
-
-    <div id="surfaceArea" style="text-align:center;opacity:0;transition:opacity 0.6s;pointer-events:none">
-      <p class="clue" style="margin-bottom:1.5rem">You found it.</p>
-      <button class="btn btn-accent" id="surfaceBtn" style="font-size:0.6rem;padding:0.4rem 1rem;letter-spacing:0.15em">SURFACE</button>
-    </div>
-  </div>
-
   <script src="../utils.js"></script>
   <script>
-    /* if reached from level 15 URL puzzle, skip straight to next level */
     var saved = parseInt(localStorage.getItem('decipherProgress') || '0');
     if (saved >= 13) {
       completeLevel('level7.html', 14);
     } else {
-      trackProgress(3);
-      var area = document.getElementById('surfaceArea');
-      var observer = new IntersectionObserver(function(entries) {
-        if (entries[0].isIntersecting) {
-          area.style.opacity = '1';
-          area.style.pointerEvents = 'all';
-          observer.disconnect();
-        }
-      }, { threshold: 0.5 });
-      observer.observe(area);
-      document.getElementById('surfaceBtn').addEventListener('click', function () {
-        completeLevel('hold.html', 3);
-      });
+      window.location.href = '../index.html';
     }
   </script>
 </body>
