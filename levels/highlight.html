@@ -8,12 +8,12 @@
   <style>
     .og-grid {
       display: grid;
-      grid-template-columns: repeat(7, 38px);
-      gap: 4px;
+      grid-template-columns: repeat(10, 32px);
+      gap: 3px;
       user-select: none;
     }
     .og-cell {
-      width: 38px; height: 38px;
+      width: 32px; height: 32px;
       display: flex; align-items: center; justify-content: center;
       font-size: 1.3rem;
       border: 1px solid var(--border);
@@ -38,16 +38,16 @@
   <a href="../index.html" class="home-link">HOME</a>
   <div class="page">
     <div class="og-grid" id="grid"></div>
-    <p class="clue">Something here is not what it seems.</p>
+    <p class="clue">Everything is not what it seems.</p>
   </div>
   <script src="../utils.js"></script>
   <script>
     trackProgress(20);
 
-    var COLS = 7, ROWS = 7, TOTAL = COLS * ROWS;
+    var COLS = 10, ROWS = 10, TOTAL = COLS * ROWS;
     /* place impostor away from edges */
-    var row = 1 + Math.floor(Math.random() * (ROWS - 2));
-    var col = 1 + Math.floor(Math.random() * (COLS - 2));
+    var row = 2 + Math.floor(Math.random() * (ROWS - 4));
+    var col = 2 + Math.floor(Math.random() * (COLS - 4));
     var TARGET = row * COLS + col;
 
     var grid = document.getElementById('grid');
@@ -56,7 +56,7 @@
     for (var i = 0; i < TOTAL; i++) {
       var cell = document.createElement('div');
       cell.className = 'og-cell';
-      cell.textContent = (i === TARGET) ? '0' : 'O';
+      cell.textContent = (i === TARGET) ? '1' : 'l';
       cell.dataset.i = i;
       cell.addEventListener('click', (function(idx, el) {
         return function() {
