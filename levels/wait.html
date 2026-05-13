@@ -5,16 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DECIPHER</title>
   <link rel="stylesheet" href="../style.css?v=3">
+  <style>
+    .timer {
+      font-size: clamp(4.5rem, 22vw, 7rem);
+      letter-spacing: 0.05em;
+      line-height: 1;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      transition: color 0.1s;
+    }
+    .timer.reset-flash { color: var(--danger); }
+
+    @keyframes bodyFlash {
+      0%   { background: rgba(220,38,38,0.08); }
+      100% { background: transparent; }
+    }
+    body.flashing { animation: bodyFlash 0.35s ease-out; }
+  </style>
 </head>
 <body>
   <span class="badge">21</span>
   <a href="../index.html" class="home-link">HOME</a>
   <div class="page">
-    <p class="clue" style="line-height:2">You play faster than I build.<br>Come back in a few days to advance.</p>
+    <div class="timer" id="timer">30</div>
+    <p class="clue">Some things cannot be rushed.</p>
   </div>
   <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(21);
+
+    var left     = 30;
+    var done     = false;
+    var timerEl  = document.getElementById('timer');
+    var flashTid = null;
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function updateDisplay() { timerEl.textContent = pad(left); }
+
+    function flash() {
+      clearTimeout(flashTid);
+      timerEl.classList.add('reset-flash');
+      document.body.classList.remove('flashing');
+      void document.body.offsetWidth; /* reflow to restart animation */
+      document.body.classList.add('flashing');
+      flashTid = setTimeout(function () {
+        timerEl.classList.remove('reset-flash');
+        document.body.classList.remove('flashing');
+      }, 350);
+    }
+
+    var resetEvents = ['click', 'touchstart', 'keydown', 'scroll'];
+
+    function onReset(e) {
+      if (done) return;
+      /* ignore scroll events caused by momentum (deltaY = 0 ghost events) */
+      left = 30;
+      updateDisplay();
+      flash();
+    }
+
+    resetEvents.forEach(function (ev) {
+      document.addEventListener(ev, onReset, { passive: true });
+    });
+
+    var interval = setInterval(function () {
+      if (done) return;
+      left--;
+      updateDisplay();
+      if (left <= 0) {
+        done = true;
+        clearInterval(interval);
+        resetEvents.forEach(function (ev) {
+          document.removeEventListener(ev, onReset);
+        });
+        setTimeout(function () { completeLevel('qr.html', 21); }, 400);
+      }
+    }, 1000);
   </script>
 </body>
 </html>
