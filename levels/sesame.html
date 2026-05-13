@@ -24,7 +24,7 @@
   </style>
 </head>
 <body>
-  <span class="badge">LEVEL 10</span>
+  <span class="badge">LEVEL 9</span>
   <a href="../index.html" class="home-link">HOME</a>
   <div class="page">
     <h1 class="title">THE CAVE</h1>
@@ -37,13 +37,13 @@
   </div>
   <script src="../utils.js"></script>
   <script>
-    trackProgress(10);
+    trackProgress(9);
     bindAnswer('ans', 'sesame', 'letters.html', 10);
 
     var typed = '';
     document.addEventListener('keydown', function (e) {
       typed += e.key.toLowerCase();
-      if (typed.slice(-6) === 'sesame') completeLevel('letters.html', 10);
+      if (typed.slice(-6) === 'sesame') completeLevel('letters.html', 9);
       if (typed.length > 20) typed = typed.slice(-20);
     });
   </script>

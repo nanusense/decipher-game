@@ -3,20 +3,20 @@ var LEVEL_URLS = [
   null,             /* 0  */
   'start.html',     /* 1  — click the orb */
   'door.html',      /* 2  — double-tap */
-  'shallow.html',   /* 3  — URL word swap */
-  'deep.html',      /* 4  — scroll to bottom */
-  'hold.html',      /* 5  — long press 2s */
-  'ink.html',       /* 6  — invisible ink */
-  'level7.html',    /* 7  — URL number change */
-  'tiny.html',      /* 8  — zoom to read */
-  'sequence.html',  /* 9  — click in order */
-  'sesame.html',    /* 10 — type a word */
-  'letters.html',   /* 11 — acrostic */
-  'source.html',    /* 12 — view source */
-  'triple.html',    /* 13 — triple click */
-  'hunt.html',      /* 14 — find in page */
-  'turn.html',      /* 15 — orientation */
-  'blind.html',     /* 16 — alt text */
+  'deep.html',      /* 3  — scroll to bottom */
+  'hold.html',      /* 4  — long press 2s */
+  'ink.html',       /* 5  — invisible ink */
+  'level7.html',    /* 6  — URL number change */
+  'tiny.html',      /* 7  — zoom to read */
+  'sequence.html',  /* 8  — click in order */
+  'sesame.html',    /* 9  — type a word */
+  'letters.html',   /* 10 — acrostic */
+  'source.html',    /* 11 — view source */
+  'triple.html',    /* 12 — combination lock */
+  'hunt.html',      /* 13 — catch the dot */
+  'turn.html',      /* 14 — orientation */
+  'shallow.html',   /* 15 — URL word swap */
+  'blind.html',     /* 16 — shake */
   'pattern.html',   /* 17 — dot pattern */
   'count.html',     /* 18 — exact count */
   'lock.html',      /* 19 — drag & drop */

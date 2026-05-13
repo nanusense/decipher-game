@@ -12,7 +12,7 @@
   </style>
 </head>
 <body>
-  <span class="badge">LEVEL 4</span>
+  <span class="badge">LEVEL 3</span>
   <a href="../index.html" class="home-link">HOME</a>
 
   <div style="text-align:center;padding:4rem 1.5rem 2rem">
@@ -45,19 +45,25 @@
 
   <script src="../utils.js"></script>
   <script>
-    trackProgress(4);
-    var area = document.getElementById('surfaceArea');
-    var observer = new IntersectionObserver(function(entries) {
-      if (entries[0].isIntersecting) {
-        area.style.opacity = '1';
-        area.style.pointerEvents = 'all';
-        observer.disconnect();
-      }
-    }, { threshold: 0.5 });
-    observer.observe(area);
-    document.getElementById('surfaceBtn').addEventListener('click', function () {
-      completeLevel('hold.html', 5);
-    });
+    /* if reached from level 15 URL puzzle, skip straight to next level */
+    var saved = parseInt(localStorage.getItem('decipherProgress') || '0');
+    if (saved >= 14) {
+      completeLevel('blind.html', 15);
+    } else {
+      trackProgress(3);
+      var area = document.getElementById('surfaceArea');
+      var observer = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting) {
+          area.style.opacity = '1';
+          area.style.pointerEvents = 'all';
+          observer.disconnect();
+        }
+      }, { threshold: 0.5 });
+      observer.observe(area);
+      document.getElementById('surfaceBtn').addEventListener('click', function () {
+        completeLevel('hold.html', 3);
+      });
+    }
   </script>
 </body>
 </html>

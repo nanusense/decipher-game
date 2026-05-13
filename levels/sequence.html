@@ -39,7 +39,7 @@
   </style>
 </head>
 <body>
-  <span class="badge">LEVEL 9</span>
+  <span class="badge">LEVEL 8</span>
   <a href="../index.html" class="home-link">HOME</a>
   <div class="page">
     <div class="medal-row">
@@ -52,7 +52,7 @@
   </div>
   <script src="../utils.js"></script>
   <script>
-    trackProgress(9);
+    trackProgress(8);
     var next = 1;
     var fb   = document.getElementById('fb');
 
@@ -63,7 +63,7 @@
           el.classList.add('done');
           next++;
           fb.textContent = '';
-          if (next > 3) setTimeout(function () { completeLevel('sesame.html', 9); }, 400);
+          if (next > 3) setTimeout(function () { completeLevel('sesame.html', 8); }, 400);
         } else {
           next = 1;
           document.querySelectorAll('.medal').forEach(function (m) { m.classList.remove('done'); });

@@ -25,7 +25,7 @@
   </style>
 </head>
 <body>
-  <span class="badge">LEVEL 5</span>
+  <span class="badge">LEVEL 4</span>
   <a href="../index.html" class="home-link">HOME</a>
   <div class="page">
     <h1 class="title">HOLD ON</h1>
@@ -39,7 +39,7 @@
   </div>
   <script src="../utils.js"></script>
   <script>
-    trackProgress(5);
+    trackProgress(4);
     var ring = document.getElementById('ring');
     var bar  = document.getElementById('bar');
     var sub  = document.getElementById('sub');
@@ -53,7 +53,7 @@
       fill.style.transform = 'scale(' + p + ')';
       sub.textContent = p < 1 ? Math.ceil(HOLD * (1 - p) / 1000) + 's' : '✓';
       if (p < 1) { raf = requestAnimationFrame(tick); }
-      else { setTimeout(function () { completeLevel('ink.html', 5); }, 300); }
+      else { setTimeout(function () { completeLevel('ink.html', 4); }, 300); }
     }
 
     function go(e) { e.preventDefault(); start = null; raf = requestAnimationFrame(tick); }
