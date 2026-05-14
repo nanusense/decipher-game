@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DECIPHER</title>
+  <title>ICON</title>
   <link rel="stylesheet" href="../style.css?v=3">
   <style>
     .hint-txt {
@@ -26,20 +26,7 @@
   <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(24);
-
-    var WORD   = 'ICON';
-    var FRAMES = WORD.split('').concat(['·']);
-    var idx    = 0;
-
-    function tick() {
-      document.title = FRAMES[idx];
-      idx = (idx + 1) % FRAMES.length;
-    }
-
-    tick();
-    setInterval(tick, 1200);
-
-bindAnswer('ans', 'icon', 'morse.html', 24);
+    bindAnswer('ans', 'icon', 'morse.html', 24);
   </script>
 </body>
 </html>
