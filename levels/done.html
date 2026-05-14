@@ -302,15 +302,22 @@
 
     loadWall();
 
+    /* remove the utils.js "You like it?" footer — this page has its own CTA */
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('body > div').forEach(function (d) {
+        if (d.style.position === 'fixed' && d.querySelector('a[href*="razorpay"]')) {
+          d.remove();
+        }
+      });
+    });
+
     /* ---- share ---- */
     document.getElementById('shareBtn').addEventListener('click', function () {
-      var url   = 'https://decipher.shiftingradius.com';
-      var title = 'DECIPHER';
-      var text  = 'I just solved all 30 levels of DECIPHER. Can you?';
-      var hint  = document.querySelector('.share-hint');
+      var url  = 'https://decipher.shiftingradius.com';
+      var hint = document.querySelector('.share-hint');
 
       if (navigator.share) {
-        navigator.share({ title: title, text: text, url: url }).catch(function () {});
+        navigator.share({ title: 'DECIPHER — Can you solve all 30 levels?', url: url }).catch(function () {});
       } else {
         navigator.clipboard.writeText(url).then(function () {
           var orig = hint.textContent;
