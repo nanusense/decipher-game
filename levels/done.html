@@ -62,11 +62,88 @@
       transition: background 0.15s, color 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
-
     .support-btn:hover,
     .support-btn:active {
       background: var(--text);
       color: var(--bg);
+    }
+
+    /* --- leaderboard --- */
+    .wall-wrap {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .wall-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .wall-input-row {
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .wall-input {
+      flex: 1;
+      font-family: var(--font);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      outline: none;
+      padding: 0.4rem 0;
+      background: transparent;
+      color: var(--text);
+    }
+    .wall-input::placeholder { color: var(--border); }
+
+    .wall-submit {
+      font-family: var(--font);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      border: 1px solid var(--border);
+      background: none;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+      color: var(--text);
+      transition: background 0.15s, color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wall-submit:hover { background: var(--text); color: var(--bg); }
+
+    .wall-names {
+      width: 100%;
+      max-width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .wall-entry {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.4rem;
+    }
+    .wall-entry .name { color: var(--text); }
+
+    .wall-status {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--border);
+      text-align: center;
+      min-height: 1em;
     }
 
     .done-footer {
@@ -101,6 +178,24 @@
       SUPPORT &amp; BUILD MORE
     </a>
 
+    <div class="done-divider"></div>
+
+    <!-- LEADERBOARD -->
+    <div class="wall-wrap">
+      <p class="wall-label">WALL OF DECIPHERERS</p>
+
+      <div class="wall-input-row">
+        <input class="wall-input" id="wallName" type="text"
+               placeholder="your name"
+               autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
+        <button class="wall-submit" id="wallBtn">ADD</button>
+      </div>
+
+      <p class="wall-status" id="wallStatus"></p>
+
+      <div class="wall-names" id="wallNames"></div>
+    </div>
+
     <p class="done-footer">More levels coming. Tell a friend.</p>
 
   </div>
@@ -113,6 +208,79 @@
       lnk.rel = 'icon'; lnk.type = 'image/svg+xml'; lnk.href = '../favicon.svg';
       document.head.appendChild(lnk);
     })();
+
+    /* ---- config ---- */
+    var FORM_URL   = 'https://docs.google.com/forms/d/e/1FAIpQLScN79E2Ok4Xq64d64SevmKBQOog8kK3pBu-pxeEoRRVNJJKkA/formResponse';
+    var ENTRY_ID   = 'entry.784658064';
+    var SHEET_CSV  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1wt_BDpVbDpN-GIVWv8ZlmStINLEmwV-kxcTbgkQoCv_ZutRAhXR_OCwoCFSKJvLk4wKniZcZHNXF/pub?output=csv';
+
+    /* ---- submit name ---- */
+    document.getElementById('wallBtn').addEventListener('click', function () {
+      var name = document.getElementById('wallName').value.trim();
+      if (!name) return;
+
+      var status = document.getElementById('wallStatus');
+      status.textContent = 'ADDING...';
+
+      var data = new FormData();
+      data.append(ENTRY_ID, name);
+
+      fetch(FORM_URL, { method: 'POST', body: data, mode: 'no-cors' })
+        .then(function () {
+          status.textContent = 'ADDED. WELCOME TO THE WALL.';
+          document.getElementById('wallName').value = '';
+          setTimeout(loadWall, 1500);
+        })
+        .catch(function () {
+          status.textContent = 'SOMETHING WENT WRONG. TRY AGAIN.';
+        });
+    });
+
+    /* ---- load leaderboard ---- */
+    function loadWall() {
+      fetch(SHEET_CSV)
+        .then(function (r) { return r.text(); })
+        .then(function (csv) {
+          var lines  = csv.trim().split('\n').slice(1); /* skip header */
+          var container = document.getElementById('wallNames');
+          container.innerHTML = '';
+
+          if (!lines.length || (lines.length === 1 && !lines[0])) {
+            container.innerHTML = '<p class="wall-status">Be the first.</p>';
+            return;
+          }
+
+          /* show latest 20, newest first */
+          lines.reverse().slice(0, 20).forEach(function (line) {
+            var parts = line.split(',');
+            var ts    = parts[0] ? parts[0].replace(/"/g, '').trim() : '';
+            var nm    = parts[1] ? parts[1].replace(/"/g, '').trim() : '';
+            if (!nm) return;
+
+            /* format date nicely */
+            var date = '';
+            try {
+              var d = new Date(ts);
+              date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
+            } catch(e) {}
+
+            var el = document.createElement('div');
+            el.className = 'wall-entry';
+            el.innerHTML = '<span class="name">' + escHtml(nm) + '</span><span>' + escHtml(date) + '</span>';
+            container.appendChild(el);
+          });
+        })
+        .catch(function () {
+          document.getElementById('wallNames').innerHTML =
+            '<p class="wall-status">Could not load.</p>';
+        });
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    loadWall();
   </script>
 </body>
 </html>
