@@ -148,16 +148,39 @@ function onSwipe(el, direction, callback) {
 }
 
 (function () {
-  var f = document.createElement('div');
-  f.style.cssText =
-    'position:fixed;bottom:0.9rem;left:0;right:0;text-align:center;' +
-    'font-size:0.6rem;letter-spacing:0.1em;font-family:Courier New,monospace;';
-  f.innerHTML =
+  var el = document.createElement('div');
+  el.style.cssText =
+    'position:fixed;bottom:0.9rem;right:1rem;z-index:50;' +
+    'font-family:Courier New,monospace;font-size:0.75rem;letter-spacing:0.1em;color:#9ca3af;' +
+    'white-space:nowrap;overflow:hidden;max-width:22px;' +
+    'padding:0.3rem 0.2rem;' +
+    'transition:max-width 0.3s ease,color 0.15s;cursor:pointer;' +
+    '-webkit-tap-highlight-color:transparent;';
+  el.innerHTML =
+    '<span style="user-select:none;">•</span>' +
     '<a href="https://razorpay.me/@sandeepnanu" target="_blank" rel="noopener" ' +
-    'style="color:#9ca3af;text-decoration:none;">' +
-    'You like it? Support it?' +
-    '</a>';
+    'style="color:inherit;text-decoration:none;"> Like it? Support it.</a>';
+
+  var expanded = false;
+
+  el.addEventListener('mouseenter', function () {
+    el.style.maxWidth = '220px';
+  });
+  el.addEventListener('mouseleave', function () {
+    el.style.maxWidth = '22px';
+    expanded = false;
+  });
+
+  /* mobile: first tap expands, second tap follows the link */
+  el.addEventListener('click', function (e) {
+    if (!expanded) {
+      e.preventDefault();
+      expanded = true;
+      el.style.maxWidth = '220px';
+    }
+  });
+
   document.addEventListener('DOMContentLoaded', function () {
-    document.body.appendChild(f);
+    document.body.appendChild(el);
   });
 })();
