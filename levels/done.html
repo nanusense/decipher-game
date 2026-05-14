@@ -150,11 +150,25 @@
     }
 
     .done-footer {
-      font-size: 0.6rem;
-      letter-spacing: 0.15em;
-      color: var(--border);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
       text-align: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s;
     }
+    .done-footer:hover { color: var(--text); }
+
+    .share-hint {
+      display: block;
+      font-size: 0.55rem;
+      letter-spacing: 0.18em;
+      color: var(--border);
+      margin-top: 0.4rem;
+      transition: color 0.15s;
+    }
+    .done-footer:hover .share-hint { color: var(--muted); }
   </style>
 </head>
 <body>
@@ -199,7 +213,10 @@
       <div class="wall-names" id="wallNames"></div>
     </div>
 
-    <p class="done-footer">More levels coming. Tell a friend.</p>
+    <p class="done-footer" id="shareBtn">
+      More levels coming. Tell a friend.
+      <span class="share-hint">TAP TO SHARE</span>
+    </p>
 
   </div>
 
@@ -284,6 +301,26 @@
     }
 
     loadWall();
+
+    /* ---- share ---- */
+    document.getElementById('shareBtn').addEventListener('click', function () {
+      var url   = 'https://decipher.shiftingradius.com';
+      var title = 'DECIPHER';
+      var text  = 'I just solved all 30 levels of DECIPHER. Can you?';
+      var hint  = document.querySelector('.share-hint');
+
+      if (navigator.share) {
+        navigator.share({ title: title, text: text, url: url }).catch(function () {});
+      } else {
+        navigator.clipboard.writeText(url).then(function () {
+          var orig = hint.textContent;
+          hint.textContent = 'LINK COPIED';
+          setTimeout(function () { hint.textContent = orig; }, 2000);
+        }).catch(function () {
+          window.open(url, '_blank');
+        });
+      }
+    });
   </script>
 </body>
 </html>
