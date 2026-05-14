@@ -7,105 +7,172 @@
   <link rel="stylesheet" href="../style.css?v=3">
   <style>
     .play-btn {
-      width: 80px; height: 80px; border-radius: 50%;
-      border: 2px solid var(--text);
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
       background: transparent;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 1.5rem;
-      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: border-color 0.2s;
     }
-    .play-btn:hover { background: var(--surface); }
+    .play-btn.playing {
+      border-color: var(--text);
+    }
+    .play-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: var(--text);
+      margin-left: 3px; /* optical centre for play triangle */
+    }
     .wave {
-      display: flex; align-items: flex-end; gap: 3px; height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 32px;
     }
     .bar {
-      width: 4px; background: var(--border); border-radius: 2px;
-      transition: height 0.1s, background 0.1s;
+      width: 3px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      transition: height 0.08s, background 0.08s;
     }
-    .morse-ref {
-      font-size: 0.62rem; color: var(--muted);
-      border-collapse: collapse; margin: 0 auto;
+    .sub {
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+      color: var(--border);
+      text-align: center;
+      min-height: 1.2em;
     }
-    .morse-ref td { padding: 2px 10px; }
   </style>
 </head>
 <body>
   <span class="badge">29</span>
   <a href="../index.html" class="home-link">HOME</a>
   <div class="page">
-    <h1 class="title">LISTEN</h1>
-    <button class="play-btn" id="playBtn">▶</button>
+    <p class="clue">Decode what you hear.</p>
+
+    <button class="play-btn" id="playBtn" aria-label="Play">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+
     <div class="wave" id="wave">
-      <div class="bar" style="height:8px"></div>
-      <div class="bar" style="height:8px"></div>
-      <div class="bar" style="height:8px"></div>
-      <div class="bar" style="height:8px"></div>
-      <div class="bar" style="height:8px"></div>
-      <div class="bar" style="height:8px"></div>
-      <div class="bar" style="height:8px"></div>
-      <div class="bar" style="height:8px"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
     </div>
-    <table class="morse-ref">
-      <tr><td>····</td><td>= H</td><td>·</td><td>= E</td></tr>
-      <tr><td>·–</td><td>= A</td><td>·–·</td><td>= R</td></tr>
-    </table>
+
+    <p class="sub" id="sub">TAP TO PLAY</p>
+
     <div class="answer-wrap">
       <input class="answer-input" id="ans" type="text" placeholder="…"
              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     </div>
-    <p class="clue">Decode what you hear.</p>
   </div>
+
   <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(29);
 
-    /* Web Audio morse: HEAR = ···· · ·– ·–· */
-    var ctx = null;
-    var DIT = 0.10, DAH = 0.30, GAP = 0.10, LGAP = 0.35;
+    /* BEAT in morse:
+       B = −···   E = ·   A = ·−   T = −
+       seq: 3=dah  1=dit  0=letter-gap                */
+    var SEQ = [3,1,1,1, 0, 1, 0, 1,3, 0, 3];
 
-    /* sequence: 1=dit, 3=dah, 0=letter-gap */
-    var SEQ = [1,1,1,1, 0, 1, 0, 1,3, 0, 1,3,1];
+    var DIT  = 0.10;
+    var DAH  = 0.30;
+    var GAP  = 0.10;   /* between symbols in same letter */
+    var LGAP = 0.70;   /* between letters                */
+
+    var ctx     = null;
+    var playing = false;
+
+    var playBtn = document.getElementById('playBtn');
+    var sub     = document.getElementById('sub');
+    var bars    = document.querySelectorAll('.bar');
+
+    function getCtx() {
+      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      return ctx;
+    }
 
     function beep(ac, start, dur) {
       var osc  = ac.createOscillator();
       var gain = ac.createGain();
-      osc.connect(gain); gain.connect(ac.destination);
-      osc.frequency.value = 600;
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.frequency.value = 620;
+      osc.type = 'sine';
       gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.4, start + 0.01);
-      gain.gain.setValueAtTime(0.4, start + dur - 0.01);
+      gain.gain.linearRampToValueAtTime(0.35, start + 0.008);
+      gain.gain.setValueAtTime(0.35, start + dur - 0.008);
       gain.gain.linearRampToValueAtTime(0, start + dur);
-      osc.start(start); osc.stop(start + dur);
+      osc.start(start);
+      osc.stop(start + dur);
     }
 
-    var bars = document.querySelectorAll('.bar');
     function animateBars(active) {
-      bars.forEach(function (b, i) {
-        b.style.height  = active ? (10 + Math.random() * 28) + 'px' : '8px';
+      bars.forEach(function (b) {
+        b.style.height     = active ? (4 + Math.random() * 24) + 'px' : '4px';
         b.style.background = active ? 'var(--text)' : 'var(--border)';
       });
     }
 
-    document.getElementById('playBtn').addEventListener('click', function () {
-      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-      var t = ctx.currentTime + 0.1;
-      SEQ.forEach(function (s) {
-        if (s === 0) { t += LGAP; return; }
-        var dur = s === 1 ? DIT : DAH;
-        beep(ctx, t, dur);
-        t += dur + GAP;
-      });
+    function play() {
+      if (playing) return;
+      playing = true;
+      playBtn.classList.add('playing');
+      sub.textContent = '';
 
-      /* simple bar animation during playback */
-      var end = t;
-      var iv = setInterval(function () {
-        if (ctx.currentTime < end) { animateBars(true); }
-        else { animateBars(false); clearInterval(iv); }
-      }, 80);
-    });
+      var ac = getCtx();
 
-    bindAnswer('ans', 'hear', 'slide.html', 29);
+      function schedule() {
+        var t = ac.currentTime + 0.15;
+
+        SEQ.forEach(function (s) {
+          if (s === 0) { t += LGAP; return; }
+          var dur = s === 1 ? DIT : DAH;
+          beep(ac, t, dur);
+          t += dur + GAP;
+        });
+
+        var endTime = t;
+        var iv = setInterval(function () {
+          if (ac.currentTime < endTime) {
+            animateBars(true);
+          } else {
+            animateBars(false);
+            clearInterval(iv);
+            playing = false;
+            playBtn.classList.remove('playing');
+            sub.textContent = 'TAP TO REPLAY';
+          }
+        }, 80);
+      }
+
+      /* resume suspended context (browser autoplay policy) then play */
+      if (ac.state === 'suspended') {
+        ac.resume().then(schedule);
+      } else {
+        schedule();
+      }
+    }
+
+    playBtn.addEventListener('click', play);
+
+    bindAnswer('ans', 'beat', 'finale.html', 29);
   </script>
 </body>
 </html>

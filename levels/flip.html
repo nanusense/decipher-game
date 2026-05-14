@@ -6,25 +6,213 @@
   <title>DECIPHER</title>
   <link rel="stylesheet" href="../style.css?v=3">
   <style>
-    .upside { font-size: 2rem; letter-spacing: 0.15em; transform: rotate(180deg); display: inline-block; }
+    .simon-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 220px;
+      height: 220px;
+    }
+    .simon-btn {
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      opacity: 0.25;
+      transition: opacity 0.08s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .simon-btn.lit     { opacity: 1; }
+    .simon-btn.disabled { pointer-events: none; }
+    .simon-btn[data-color="red"]    { background: #ef4444; }
+    .simon-btn[data-color="blue"]   { background: #3b82f6; }
+    .simon-btn[data-color="green"]  { background: #22c55e; }
+    .simon-btn[data-color="yellow"] { background: #eab308; }
+
+    .simon-status {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      min-height: 1.2em;
+      text-align: center;
+    }
+    .round-dots {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .round-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.2s;
+    }
+    .round-dot.done { background: var(--text); }
   </style>
 </head>
 <body>
   <span class="badge">27</span>
   <a href="../index.html" class="home-link">HOME</a>
   <div class="page">
-    <h1 class="title">UPSIDE DOWN</h1>
-    <span class="upside">PILF</span>
-    <div class="answer-wrap">
-      <input class="answer-input" id="ans" type="text" placeholder="…"
-             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <p class="clue">Pay attention.</p>
+    <div class="round-dots" id="roundDots"></div>
+    <div class="simon-grid" id="simonGrid">
+      <button class="simon-btn" data-color="red"></button>
+      <button class="simon-btn" data-color="blue"></button>
+      <button class="simon-btn" data-color="green"></button>
+      <button class="simon-btn" data-color="yellow"></button>
     </div>
-    <p class="clue">Turn it around.</p>
+    <p class="simon-status" id="status"></p>
   </div>
   <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(27);
-    bindAnswer('ans', 'flip', 'ghost.html', 27);
+
+    var COLORS  = ['red', 'blue', 'green', 'yellow'];
+    var WIN_LEN = 5; /* sequence grows 1→2→3→4→5, so 5 rounds */
+
+    var sequence    = [];
+    var playerInput = [];
+    var watching    = false;
+    var solved      = false;
+    var roundsDone  = 0;
+
+    var grid    = document.getElementById('simonGrid');
+    var status  = document.getElementById('status');
+    var dotsCtr = document.getElementById('roundDots');
+
+    /* build progress dots */
+    for (var d = 0; d < WIN_LEN; d++) {
+      var dot = document.createElement('div');
+      dot.className = 'round-dot';
+      dotsCtr.appendChild(dot);
+    }
+
+    function updateDots() {
+      var dots = dotsCtr.querySelectorAll('.round-dot');
+      dots.forEach(function (dot, i) {
+        dot.classList.toggle('done', i < roundsDone);
+      });
+    }
+
+    function btn(color) {
+      return grid.querySelector('[data-color="' + color + '"]');
+    }
+
+    function setButtons(enabled) {
+      grid.querySelectorAll('.simon-btn').forEach(function (b) {
+        b.classList.toggle('disabled', !enabled);
+      });
+    }
+
+    function flashBtn(color, duration, cb) {
+      var b = btn(color);
+      b.classList.add('lit');
+      setTimeout(function () { b.classList.remove('lit'); if (cb) cb(); }, duration);
+    }
+
+    function flashAll(cls, duration, cb) {
+      grid.querySelectorAll('.simon-btn').forEach(function (b) { b.classList.add(cls); });
+      setTimeout(function () {
+        grid.querySelectorAll('.simon-btn').forEach(function (b) { b.classList.remove(cls); });
+        if (cb) cb();
+      }, duration);
+    }
+
+    /* play the current sequence then hand off to player */
+    function playSequence() {
+      watching = true;
+      setButtons(false);
+      status.textContent = 'WATCH';
+
+      var i = 0;
+      function next() {
+        if (i >= sequence.length) {
+          setTimeout(function () {
+            watching = false;
+            setButtons(true);
+            status.textContent = 'YOUR TURN';
+          }, 400);
+          return;
+        }
+        flashBtn(sequence[i], 550, function () {
+          setTimeout(next, 220);
+        });
+        i++;
+      }
+      setTimeout(next, 600);
+    }
+
+    function shuffle(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+
+    function startRound() {
+      /* fresh sequence — all 4 colours used, no consecutive repeats */
+      var len = roundsDone + 1;
+      sequence = shuffle(COLORS).slice(0, Math.min(len, 4));
+      while (sequence.length < len) {
+        /* pick a colour that doesn't repeat the last */
+        var options = COLORS.filter(function (c) { return c !== sequence[sequence.length - 1]; });
+        sequence.push(options[Math.floor(Math.random() * options.length)]);
+      }
+      playerInput = [];
+      updateDots();
+      playSequence();
+    }
+
+    /* button tap */
+    grid.addEventListener('click', function (e) {
+      var b = e.target.closest('.simon-btn');
+      if (!b || watching || solved || b.classList.contains('disabled')) return;
+
+      var color = b.dataset.color;
+      flashBtn(color, 180);
+
+      playerInput.push(color);
+      var idx = playerInput.length - 1;
+
+      if (playerInput[idx] !== sequence[idx]) {
+        /* wrong — flash grid, replay same round */
+        setButtons(false);
+        status.textContent = 'TRY AGAIN';
+        setTimeout(function () {
+          flashAll('lit', 300, function () {
+            playerInput = [];
+            playSequence();
+          });
+        }, 300);
+        return;
+      }
+
+      if (playerInput.length < sequence.length) return; /* more to go */
+
+      /* round complete */
+      roundsDone++;
+      updateDots();
+      setButtons(false);
+
+      if (sequence.length >= WIN_LEN) {
+        solved = true;
+        status.textContent = '';
+        flashAll('lit', 500, function () {
+          completeLevel('ghost.html', 27);
+        });
+        return;
+      }
+
+      /* next round */
+      status.textContent = 'NICE';
+      setTimeout(startRound, 1000);
+    });
+
+    /* kick off */
+    startRound();
   </script>
 </body>
 </html>

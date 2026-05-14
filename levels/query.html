@@ -10,9 +10,25 @@
   <span class="badge">23</span>
   <a href="../index.html" class="home-link">HOME</a>
   <div class="page">
-    <p class="clue" style="line-height:2">You play faster than I build.<br>Come back in a few days for more.</p>
+    <p class="clue" id="clueText">The monk's job was simple.<br>Copy faithfully. Deliver elsewhere.</p>
+    <div class="answer-wrap">
+      <input class="answer-input" id="ans" type="text" placeholder="…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
   </div>
   <script src="../utils.js?v=3"></script>
-  <script>trackProgress(23);</script>
+  <script>
+    trackProgress(23);
+
+    /* intercept copy — append hidden word to clipboard */
+    document.addEventListener('copy', function (e) {
+      var selected = window.getSelection().toString();
+      if (!selected) return;
+      e.preventDefault();
+      e.clipboardData.setData('text/plain', selected + ' SCRIBE');
+    });
+
+    bindAnswer('ans', 'scribe', 'fragment.html', 23);
+  </script>
 </body>
 </html>

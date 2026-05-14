@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER</title>
+  <link rel="stylesheet" href="../style.css?v=3">
+  <style>
+    .tile-track {
+      position: relative;
+    }
+    .tile {
+      position: absolute;
+      top: 0;
+      width: 36px;
+      height: 46px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      letter-spacing: 0.05em;
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: left 0.14s ease, border-color 0.2s;
+    }
+    .tile.dragging {
+      cursor: grabbing;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+      transform: scale(1.07);
+      transition: box-shadow 0.1s, transform 0.1s;
+      z-index: 10;
+    }
+    .tile.solved {
+      border-color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">26</span>
+  <a href="../index.html" class="home-link">HOME</a>
+  <div class="page">
+    <p class="clue">Something's out of order.</p>
+    <div class="tile-track" id="track"></div>
+  </div>
+  <script src="../utils.js?v=3"></script>
+  <script>
+    trackProgress(26);
+
+    var WORD     = 'FRAGMENT';
+    var SCRAMBLE = ['T','R','G','E','A','N','F','M'];
+    var TILE_W   = 36;
+    var GAP      = 5;
+    var TOTAL    = TILE_W + GAP;
+    var track    = document.getElementById('track');
+    var solved   = false;
+
+    var tiles = SCRAMBLE.map(function (ltr, i) {
+      return { id: i, letter: ltr, pos: i, el: null };
+    });
+
+    track.style.width  = (TILE_W * 8 + GAP * 7) + 'px';
+    track.style.height = '46px';
+
+    function posToX(pos) { return pos * TOTAL; }
+
+    tiles.forEach(function (t) {
+      var el = document.createElement('div');
+      el.className = 'tile';
+      el.textContent = t.letter;
+      el.style.left = posToX(t.pos) + 'px';
+      track.appendChild(el);
+      t.el = el;
+
+      el.addEventListener('pointerdown', function (e) {
+        if (solved) return;
+        e.preventDefault();
+        el.setPointerCapture(e.pointerId);
+        startDrag(t.id, e.clientX);
+      });
+    });
+
+    var drag = null;
+
+    function startDrag(id, clientX) {
+      drag = {
+        id:       id,
+        startX:   clientX,
+        startPos: tiles[id].pos,
+        snapshot: tiles.map(function (t) { return { id: t.id, pos: t.pos }; })
+      };
+      tiles[id].el.classList.add('dragging');
+    }
+
+    window.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var t       = tiles[drag.id];
+      var dx      = e.clientX - drag.startX;
+      var rawLeft = posToX(drag.startPos) + dx;
+      var left    = Math.max(0, Math.min(posToX(7), rawLeft));
+
+      t.el.style.left = left + 'px';
+
+      var target = Math.max(0, Math.min(7, Math.round((left + TILE_W / 2) / TOTAL)));
+      if (target === t.pos) return;
+
+      var others = drag.snapshot
+        .filter(function (s) { return s.id !== drag.id; })
+        .sort(function (a, b) { return a.pos - b.pos; });
+
+      var slots = [];
+      for (var i = 0; i < 8; i++) { if (i !== target) slots.push(i); }
+
+      others.forEach(function (s, i) {
+        tiles[s.id].pos = slots[i];
+        tiles[s.id].el.style.left = posToX(slots[i]) + 'px';
+      });
+      t.pos = target;
+    });
+
+    window.addEventListener('pointerup', function () {
+      if (!drag) return;
+      var t = tiles[drag.id];
+      t.el.classList.remove('dragging');
+      t.el.style.left = posToX(t.pos) + 'px';
+      drag = null;
+
+      var word = '';
+      for (var p = 0; p < 8; p++)
+        word += tiles.find(function (t) { return t.pos === p; }).letter;
+
+      if (word === WORD) {
+        solved = true;
+        tiles.forEach(function (t) { t.el.classList.add('solved'); });
+        setTimeout(function () { completeLevel('flip.html', 26); }, 700);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -6,45 +6,134 @@
   <title>DECIPHER</title>
   <link rel="stylesheet" href="../style.css?v=3">
   <style>
-    .ghost-field {
-      width: 280px; height: 140px;
-      border: 1px solid var(--border);
-      background: #fff;
-      display: flex; align-items: center; justify-content: center;
-      position: relative;
+    .stop-zone {
+      position: fixed;
+      inset: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
-    .ghost-word {
-      font-size: 2.5rem; letter-spacing: 0.2em;
-      color: rgba(0,0,0,0.04);
-      user-select: none; pointer-events: none;
+    .clock-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      pointer-events: none;
     }
-    .brightness-hint {
-      font-size: 0.6rem; color: var(--muted);
-      letter-spacing: 0.1em; margin-top: 0.4rem;
+    .clock-time {
+      font-size: 4.5rem;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      color: var(--text);
+    }
+    .clock-time.success { color: var(--success); }
+    .clock-time.miss    { color: var(--danger); }
+
+    .feedback {
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      min-height: 1.2em;
+      text-align: center;
+    }
+    .sub-hint {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--border);
+      text-align: center;
     }
   </style>
 </head>
 <body>
   <span class="badge">28</span>
   <a href="../index.html" class="home-link">HOME</a>
+
+  <div class="stop-zone" id="stopZone"></div>
+
   <div class="page">
-    <h1 class="title">NEARLY NOTHING</h1>
-    <div>
-      <div class="ghost-field">
-        <span class="ghost-word">GHOST</span>
-      </div>
-      <p class="brightness-hint" style="text-align:center">[ turn your brightness up ]</p>
+    <p class="clue">Are you fast enough to stop at Bolt?</p>
+    <div class="clock-wrap">
+      <div class="clock-time" id="clockTime">0.00</div>
+      <p class="feedback" id="feedback"></p>
     </div>
-    <div class="answer-wrap">
-      <input class="answer-input" id="ans" type="text" placeholder="…"
-             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-    </div>
-    <p class="clue">Open your eyes wider.</p>
+    <p class="sub-hint" id="subHint">TAP ANYWHERE TO STOP</p>
   </div>
+
   <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(28);
-    bindAnswer('ans', 'ghost', 'listen.html', 28);
+
+    var TARGET    = 9.58;
+    var TOLERANCE = 0.05; /* ±50 ms */
+
+    var clockEl   = document.getElementById('clockTime');
+    var feedbackEl = document.getElementById('feedback');
+    var hintEl    = document.getElementById('subHint');
+    var stopZone  = document.getElementById('stopZone');
+
+    var startTs  = null;
+    var elapsed  = 0;
+    var running  = false;
+    var locked   = false;
+    var solved   = false;
+    var raf      = null;
+
+    function fmt(n) {
+      return n.toFixed(2);
+    }
+
+    function tick() {
+      if (!running) return;
+      elapsed = (performance.now() - startTs) / 1000;
+      clockEl.textContent = fmt(elapsed);
+      raf = requestAnimationFrame(tick);
+    }
+
+    function start() {
+      elapsed  = 0;
+      clockEl.textContent  = '0.00';
+      clockEl.className    = 'clock-time';
+      feedbackEl.textContent = '';
+      hintEl.textContent   = 'TAP ANYWHERE TO STOP';
+      startTs = performance.now();
+      running = true;
+      locked  = false;
+      tick();
+    }
+
+    function stop() {
+      if (!running || locked || solved) return;
+      running = false;
+      locked  = true;
+      cancelAnimationFrame(raf);
+
+      var diff = elapsed - TARGET;
+      var absDiff = Math.abs(diff);
+
+      clockEl.textContent = fmt(elapsed);
+
+      if (absDiff <= TOLERANCE) {
+        solved = true;
+        clockEl.classList.add('success');
+        feedbackEl.textContent = '9.58 IS THE RECORD  ⚡';
+        hintEl.textContent = 'CLOSE ENOUGH — YOU PASS';
+        setTimeout(function () { completeLevel('listen.html', 28); }, 4000);
+      } else {
+        clockEl.classList.add('miss');
+        var sign = diff > 0 ? 'TOO LATE  +' : 'TOO EARLY  −';
+        feedbackEl.textContent = sign + absDiff.toFixed(2) + 's';
+        hintEl.textContent = '';
+        setTimeout(function () { start(); }, 1800);
+      }
+    }
+
+    stopZone.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      stop();
+    });
+
+    /* auto-start after brief pause */
+    setTimeout(start, 800);
   </script>
 </body>
 </html>

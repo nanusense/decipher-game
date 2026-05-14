@@ -6,30 +6,208 @@
   <title>DECIPHER</title>
   <link rel="stylesheet" href="../style.css?v=3">
   <style>
-    .mirrored {
-      font-size: 2rem; letter-spacing: 0.15em;
-      transform: scaleX(-1);
-      display: inline-block;
+    .tx-word {
+      display: flex;
+      gap: 1.8rem;
+      align-items: baseline;
+    }
+    .tx-letter {
+      font-size: 1.6rem;
+      letter-spacing: 0.05em;
+      transition: color 0.15s, font-size 0.15s;
+    }
+    .tx-letter.done    { font-size: 1rem; color: var(--muted); }
+    .tx-letter.current { color: var(--text); }
+    .tx-letter.pending { color: var(--border); }
+
+    .sym-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.8rem;
+    }
+    .sym-slot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      font-size: 1.3rem;
+      color: transparent;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .sym-slot.filled {
+      border-color: var(--text);
       color: var(--text);
     }
+
+    .tx-orb {
+      width: 110px; height: 110px; border-radius: 50%;
+      border: 2px solid var(--text);
+      background: var(--bg);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background 0.04s, border-color 0.1s;
+    }
+    .tx-orb.pressed   { background: var(--text); }
+    .tx-orb.dash-rdy  { background: var(--text); border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
+    .tx-orb.wrong     { background: var(--danger); border-color: var(--danger); animation: shake 0.3s; }
+    .tx-orb.correct   { background: var(--success); border-color: var(--success); }
+
+    .morse-ref {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.3rem 1rem;
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      line-height: 1.8;
+      width: 100%;
+      max-width: 320px;
+    }
+    .morse-ref span { white-space: nowrap; }
+    .morse-ref span b { color: var(--text); font-weight: normal; }
   </style>
 </head>
 <body>
   <span class="badge">25</span>
   <a href="../index.html" class="home-link">HOME</a>
   <div class="page">
-    <h1 class="title">MIRROR</h1>
-    <span class="mirrored">TCELFER</span>
-    <div class="answer-wrap">
-      <input class="answer-input" id="ans" type="text" placeholder="…"
-             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <p class="clue">Transmit the word.</p>
+    <div class="tx-word" id="txWord"></div>
+    <div class="sym-row" id="symRow"></div>
+    <div class="tx-orb"  id="orb"></div>
+    <div class="morse-ref">
+      <span><b>A</b> ·−</span>   <span><b>B</b> −···</span> <span><b>C</b> −·−·</span> <span><b>D</b> −··</span>
+      <span><b>E</b> ·</span>    <span><b>F</b> ··−·</span> <span><b>G</b> −−·</span>  <span><b>H</b> ····</span>
+      <span><b>I</b> ··</span>   <span><b>J</b> ·−−−</span> <span><b>K</b> −·−</span>  <span><b>L</b> ·−··</span>
+      <span><b>M</b> −−</span>   <span><b>N</b> −·</span>   <span><b>O</b> −−−</span>  <span><b>P</b> ·−−·</span>
+      <span><b>Q</b> −−·−</span> <span><b>R</b> ·−·</span>  <span><b>S</b> ···</span>  <span><b>T</b> −</span>
+      <span><b>U</b> ··−</span>  <span><b>V</b> ···−</span> <span><b>W</b> ·−−</span>  <span><b>X</b> −··−</span>
+      <span><b>Y</b> −·−−</span> <span><b>Z</b> −−··</span>
     </div>
-    <p class="clue">Reflect on it.</p>
   </div>
   <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(25);
-    bindAnswer('ans', 'reflect', 'morse.html', 25);
+
+    var WORD      = 'TAP';
+    var THRESHOLD = 320; /* ms: shorter = dot, longer = dash */
+
+    var MORSE = {
+      A:'·−', B:'−···', C:'−·−·', D:'−··', E:'·',
+      F:'··−·', G:'−−·', H:'····', I:'··',  J:'·−−−',
+      K:'−·−', L:'·−··', M:'−−',  N:'−·',  O:'−−−',
+      P:'·−−·',Q:'−−·−', R:'·−·', S:'···', T:'−',
+      U:'··−', V:'···−', W:'·−−', X:'−··−',Y:'−·−−', Z:'−−··'
+    };
+
+    var orb    = document.getElementById('orb');
+    var txWord = document.getElementById('txWord');
+    var symRow = document.getElementById('symRow');
+
+    var letterIdx  = 0;
+    var entered    = []; /* symbols entered for current letter */
+    var pressStart = null;
+    var dashTimer  = null;
+    var locked     = false; /* blocks input during flash animations */
+    var solved     = false;
+
+    /* ── render ── */
+    function renderWord() {
+      txWord.innerHTML = WORD.split('').map(function (c, i) {
+        var cls     = i < letterIdx ? 'done' : i === letterIdx ? 'current' : 'pending';
+        var content = i < letterIdx ? MORSE[c] : c;
+        return '<span class="tx-letter ' + cls + '">' + content + '</span>';
+      }).join('');
+    }
+
+    function renderSyms() {
+      var code = MORSE[WORD[letterIdx]] || '';
+      symRow.innerHTML = code.split('').map(function (s, i) {
+        var filled = i < entered.length;
+        return '<span class="sym-slot' + (filled ? ' filled' : '') + '">' +
+               (filled ? entered[i] : '') + '</span>';
+      }).join('');
+    }
+
+    /* ── input ── */
+    orb.addEventListener('pointerdown', function (e) {
+      if (solved || locked) return;
+      e.preventDefault();
+      this.setPointerCapture(e.pointerId);
+      pressStart = Date.now();
+      orb.classList.add('pressed');
+      dashTimer = setTimeout(function () {
+        orb.classList.replace('pressed', 'dash-rdy') ||
+          (orb.classList.remove('pressed'), orb.classList.add('dash-rdy'));
+      }, THRESHOLD);
+    });
+
+    orb.addEventListener('pointerup', commit);
+    orb.addEventListener('pointercancel', cancel);
+
+    function cancel() {
+      clearTimeout(dashTimer);
+      pressStart = null;
+      orb.classList.remove('pressed', 'dash-rdy');
+    }
+
+    function commit() {
+      if (solved || locked || pressStart === null) return;
+      clearTimeout(dashTimer);
+      var dur  = Date.now() - pressStart;
+      pressStart = null;
+      orb.classList.remove('pressed', 'dash-rdy');
+
+      var sym      = dur < THRESHOLD ? '·' : '−';
+      var code     = MORSE[WORD[letterIdx]];
+      var expected = code[entered.length];
+
+      if (sym !== expected) {
+        /* wrong symbol — flash red, reset current letter */
+        locked = true;
+        orb.classList.add('wrong');
+        setTimeout(function () {
+          orb.classList.remove('wrong');
+          entered = [];
+          renderSyms();
+          locked = false;
+        }, 500);
+        return;
+      }
+
+      entered.push(sym);
+      renderSyms();
+
+      if (entered.length < code.length) return; /* more symbols needed */
+
+      /* letter complete — show filled state briefly, then advance */
+      locked = true;
+      renderSyms();
+      setTimeout(function () {
+        entered = [];
+        letterIdx++;
+        renderWord();
+        if (letterIdx < WORD.length) {
+          renderSyms();
+          locked = false;
+          return;
+        }
+        /* word complete */
+        solved = true;
+        orb.classList.add('correct');
+        setTimeout(function () { completeLevel('morse.html', 25); }, 600);
+      }, 450);
+    }
+
+    /* ── init ── */
+    renderWord();
+    renderSyms();
   </script>
 </body>
 </html>

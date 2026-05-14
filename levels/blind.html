@@ -6,112 +6,126 @@
   <title>DECIPHER</title>
   <link rel="stylesheet" href="../style.css?v=3">
   <style>
-    @keyframes pageShake {
-      0%,100% { transform: translateX(0); }
-      15%      { transform: translateX(-8px) rotate(-1deg); }
-      35%      { transform: translateX(8px)  rotate(1deg); }
-      55%      { transform: translateX(-6px) rotate(-0.5deg); }
-      75%      { transform: translateX(6px)  rotate(0.5deg); }
-    }
-    .shaking { animation: pageShake 0.4s ease; }
-
-    #goBtn {
-      opacity: 0;
-      transform: scale(0.8);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+    .roaming-clue {
+      position: fixed;
+      top: 0;
+      left: 0;
+      transform: translate(-50%, -50%);
+      font-family: var(--font);
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+      color: var(--text);
+      line-height: 1.9;
+      text-align: center;
       pointer-events: none;
+      transition: transform 0.05s linear;
+      max-width: 300px;
+      will-change: left, top;
     }
-    #goBtn.show {
+
+    .success-msg {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .success-msg.show {
       opacity: 1;
-      transform: scale(1);
       pointer-events: auto;
     }
-    #fallback {
-      position: fixed; bottom: 3rem; left: 0; right: 0;
-      text-align: center;
-      font-size: 0.6rem; letter-spacing: 0.1em;
-      color: var(--muted);
-      opacity: 0; transition: opacity 0.5s;
-    }
-    #fallback a { color: var(--muted); text-decoration: underline; cursor: pointer; }
   </style>
 </head>
 <body>
   <span class="badge">16</span>
   <a href="../index.html" class="home-link">HOME</a>
-  <div class="page" id="page">
-    <p class="clue" style="font-size:1.1rem">'Cause the players gonna play, play, play, play, play<br>And the haters gonna hate, hate, hate, hate, hate<br>Baby, I'm just gonna…</p>
+
+  <div class="roaming-clue" id="clue">
+    'Cause the players gonna play, play, play, play, play<br>
+    And the haters gonna hate, hate, hate, hate, hate<br>
+    Baby, I'm just gonna…
+  </div>
+
+  <div class="success-msg" id="successMsg">
+    <p class="clue">Shake it off.</p>
     <button class="btn btn-accent" id="goBtn">CONTINUE</button>
   </div>
-  <div id="fallback">try shaking your device &nbsp;·&nbsp; <a id="skipLink">not working?</a></div>
+
   <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(16);
 
-    var done = false;
+    var clueEl     = document.getElementById('clue');
+    var successEl  = document.getElementById('successMsg');
+    var done       = false;
+
+    var THRESHOLD  = 4000; /* total px to travel before triggering */
+    var totalDist  = 0;
+    var lastX      = null;
+    var lastY      = null;
+    var held       = false;
+
+    /* centre clue on load */
+    var cx = window.innerWidth  / 2;
+    var cy = window.innerHeight / 2;
+    clueEl.style.left = cx + 'px';
+    clueEl.style.top  = cy + 'px';
+
+    function moveTo(x, y) {
+      if (done || !held) return;
+
+      if (lastX !== null) {
+        var dx = x - lastX;
+        var dy = y - lastY;
+        totalDist += Math.sqrt(dx * dx + dy * dy);
+        if (totalDist >= THRESHOLD) {
+          trigger();
+          return;
+        }
+      }
+
+      lastX = x;
+      lastY = y;
+
+      clueEl.style.left = x + 'px';
+      clueEl.style.top  = y + 'px';
+    }
 
     function trigger() {
       if (done) return;
       done = true;
-      document.getElementById('page').classList.add('shaking');
-      document.getElementById('goBtn').classList.add('show');
+      clueEl.style.display = 'none';
+      successEl.classList.add('show');
     }
 
-    function startMotion() {
-      var lastAcc = null;
-      window.addEventListener('devicemotion', function (e) {
-        var a = e.accelerationIncludingGravity;
-        if (!a) return;
-        if (lastAcc) {
-          var dx = Math.abs(a.x - lastAcc.x);
-          var dy = Math.abs(a.y - lastAcc.y);
-          if (dx + dy > 25) trigger();
-        }
-        lastAcc = { x: a.x, y: a.y };
-      });
-    }
-
-    /* iOS 13+ requires permission request inside a user gesture */
-    if (typeof DeviceMotionEvent !== 'undefined' &&
-        typeof DeviceMotionEvent.requestPermission === 'function') {
-      document.body.addEventListener('click', function askOnce() {
-        DeviceMotionEvent.requestPermission().then(function (state) {
-          if (state === 'granted') startMotion();
-        }).catch(function () {});
-        document.body.removeEventListener('click', askOnce);
-      }, { once: true });
-    } else {
-      startMotion();
-    }
-
-    /* desktop — rapid back-and-forth mouse shake */
-    var lastX = null, lastDir = 0, reversals = [];
-    document.addEventListener('mousemove', function (e) {
-      if (lastX === null) { lastX = e.clientX; return; }
-      var dx = e.clientX - lastX;
-      if (Math.abs(dx) < 8) return;
-      var dir = dx > 0 ? 1 : -1;
-      if (dir !== lastDir && lastDir !== 0) {
-        var now = Date.now();
-        reversals.push(now);
-        reversals = reversals.filter(function (t) { return now - t < 600; });
-        if (reversals.length >= 8) trigger();
-      }
-      lastDir = dir;
+    /* mouse — only while button held down */
+    document.addEventListener('mousedown', function (e) {
+      held  = true;
       lastX = e.clientX;
+      lastY = e.clientY;
     });
+    document.addEventListener('mouseup',   function () { held = false; lastX = null; lastY = null; });
+    document.addEventListener('mousemove', function (e) { moveTo(e.clientX, e.clientY); });
+
+    /* touch — only while finger held down */
+    document.addEventListener('touchstart', function (e) {
+      held  = true;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchend',   function () { held = false; lastX = null; lastY = null; });
+    document.addEventListener('touchmove',  function (e) {
+      e.preventDefault();
+      moveTo(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
 
     document.getElementById('goBtn').addEventListener('click', function () {
       completeLevel('pattern.html', 16);
-    });
-
-    /* timed fallback — show hint + skip after 20s */
-    var fallbackEl = document.getElementById('fallback');
-    setTimeout(function () {
-      fallbackEl.style.opacity = '1';
-    }, 20000);
-    document.getElementById('skipLink').addEventListener('click', function () {
-      trigger();
     });
   </script>
 </body>

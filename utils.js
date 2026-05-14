@@ -40,12 +40,12 @@ var LEVEL_URLS = [
   'qr.html',        /* 22 — QR code */
   'query.html',     /* 23 — URL query param */
   'fragment.html',  /* 24 — URL hash */
-  'mirror.html',    /* 25 — mirrored text */
-  'morse.html',     /* 26 — morse visual */
+  'morse.html',     /* 25 — morse transmit */
+  'scramble.html',  /* 26 — unscramble */
   'flip.html',      /* 27 — upside-down text */
   'ghost.html',     /* 28 — near-invisible text */
   'listen.html',    /* 29 — audio morse */
-  'slide.html',     /* 30 — swipe */
+  'zorro.html',     /* 30 — draw Z */
   'last.html',      /* 31 — last-letter acrostic */
   'numbers.html',   /* 32 — A=1 numbers */
   'emoji.html',     /* 33 — emoji cipher */

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DECIPHER</title>
+  <link rel="stylesheet" href="../style.css?v=3">
+  <style>
+    #canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: crosshair;
+      z-index: 0;
+    }
+    .page {
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .home-link, .badge {
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">30</span>
+  <a href="../index.html" class="home-link">HOME</a>
+
+  <canvas id="canvas"></canvas>
+
+  <div class="page">
+    <p class="clue">The Mask of...</p>
+  </div>
+
+  <script src="../utils.js?v=3"></script>
+  <script>
+    trackProgress(30);
+
+    var canvas  = document.getElementById('canvas');
+    var ctx     = canvas.getContext('2d');
+    var solved  = false;
+    var drawing = false;
+    var points  = [];
+
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    ctx.lineWidth   = 3;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    ctx.strokeStyle = '#111';
+
+    /* ---------- drawing ---------- */
+    canvas.addEventListener('pointerdown', function (e) {
+      if (solved) return;
+      e.preventDefault();
+      canvas.setPointerCapture(e.pointerId);
+      drawing = true;
+      points  = [{ x: e.clientX, y: e.clientY }];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      ctx.moveTo(e.clientX, e.clientY);
+    });
+
+    canvas.addEventListener('pointermove', function (e) {
+      if (!drawing || solved) return;
+      e.preventDefault();
+      points.push({ x: e.clientX, y: e.clientY });
+      ctx.lineTo(e.clientX, e.clientY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(e.clientX, e.clientY);
+    });
+
+    canvas.addEventListener('pointerup', function (e) {
+      if (!drawing || solved) return;
+      drawing = false;
+
+      if (points.length < 10) return; /* too short */
+
+      if (isZ(points)) {
+        solved = true;
+        /* flash green then advance */
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = getComputedStyle(document.documentElement)
+                            .getPropertyValue('--success').trim() || '#22c55e';
+        replayPath(points, function () {
+          setTimeout(function () { completeLevel('done.html', 30); }, 600);
+        });
+      } else {
+        /* fade out and reset */
+        fadeClear(function () {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          points = [];
+        });
+      }
+    });
+
+    canvas.addEventListener('pointercancel', function () { drawing = false; });
+
+    /* ---------- Z detection (single stroke) ---------- */
+    function isZ(pts) {
+      var n = pts.length;
+      var t = Math.floor(n / 3);
+
+      var s1 = { dx: pts[t].x     - pts[0].x,   dy: pts[t].y     - pts[0].y };
+      var s2 = { dx: pts[2*t].x   - pts[t].x,   dy: pts[2*t].y   - pts[t].y };
+      var s3 = { dx: pts[n-1].x   - pts[2*t].x, dy: pts[n-1].y   - pts[2*t].y };
+
+      var MIN = 30;
+
+      var ok1 = s1.dx > MIN && Math.abs(s1.dy) < Math.abs(s1.dx) * 0.7;  /* rightward, horizontal */
+      var ok2 = s2.dx < -MIN && s2.dy > MIN;                               /* left + down diagonal  */
+      var ok3 = s3.dx > MIN && Math.abs(s3.dy) < Math.abs(s3.dx) * 0.7;  /* rightward, horizontal */
+
+      return ok1 && ok2 && ok3;
+    }
+
+    /* ---------- helpers ---------- */
+    function fadeClear(cb) {
+      var alpha = 1;
+      var iv = setInterval(function () {
+        alpha -= 0.08;
+        if (alpha <= 0) { clearInterval(iv); cb(); return; }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = alpha;
+        drawPath(points);
+        ctx.globalAlpha = 1;
+      }, 30);
+    }
+
+    function drawPath(pts) {
+      if (pts.length < 2) return;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+    }
+
+    function replayPath(pts, cb) {
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      var i = 1;
+      function step() {
+        if (i >= pts.length) { if (cb) cb(); return; }
+        ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pts[i].x, pts[i].y);
+        i++;
+        requestAnimationFrame(step);
+      }
+      step();
+    }
+  </script>
+</body>
+</html>

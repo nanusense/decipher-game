@@ -5,55 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DECIPHER</title>
   <link rel="stylesheet" href="../style.css?v=3">
-  <style>
-    .eye-wrap {
-      width: 100%;
-      max-width: 300px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    .eye-wrap img {
-      width: 100%;
-      display: block;
-    }
-    .hint-txt {
-      font-size: 0.65rem;
-      color: var(--border);
-      letter-spacing: 0.1em;
-      min-height: 1.2em;
-    }
-  </style>
 </head>
 <body>
   <span class="badge">22</span>
   <a href="../index.html" class="home-link">HOME</a>
+
   <div class="page">
-    <div class="eye-wrap" id="eyeWrap">
-      <img src="../assets/images/iris.svg" alt="an eye" draggable="true">
-    </div>
-    <p class="clue">Look before you save.</p>
-    <div class="answer-wrap">
-      <input class="answer-input" id="ans" type="text" placeholder="…"
-             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-    </div>
-    <p class="hint-txt" id="hint"></p>
+    <p class="clue">Knock knock won't work here.</p>
   </div>
+
   <script src="../utils.js?v=3"></script>
   <script>
     trackProgress(22);
 
-    /* show a nudge after 20s of no progress */
-    var nudged = false;
-    setTimeout(function () {
-      if (!nudged) {
-        nudged = true;
-        document.getElementById('hint').textContent = 'try holding it';
-      }
-    }, 20000);
+    var taps     = [];
+    var WINDOW   = 600; /* ms — three taps must land within this window */
+    var solved   = false;
 
-    bindAnswer('ans', 'iris', 'query.html', 22);
+    function onTap() {
+      if (solved) return;
+      var now = Date.now();
+      taps.push(now);
+      taps = taps.filter(function (t) { return now - t < WINDOW; });
+      if (taps.length >= 3) {
+        solved = true;
+        completeLevel('query.html', 22);
+      }
+    }
+
+    document.addEventListener('pointerdown', onTap);
   </script>
 </body>
 </html>
