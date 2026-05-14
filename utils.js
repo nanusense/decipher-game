@@ -1,3 +1,15 @@
+/* Google Analytics */
+(function () {
+  var s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CPY3S2SCRM';
+  document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-CPY3S2SCRM');
+})();
+
 /* inject favicon on every level page */
 (function () {
   var lnk = document.createElement('link');
