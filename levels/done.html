@@ -4,17 +4,51 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DECIPHER</title>
-  <link rel="stylesheet" href="../style.css?v=3">
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --font:    'Courier New', monospace;
+      --bg:      #0a0a12;
+      --text:    #e8eaf0;
+      --muted:   #7a8499;
+      --border:  rgba(255,255,255,0.12);
+      --success: #00ffc8;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: var(--font);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+
+    #c {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
     .done-wrap {
+      position: relative;
+      z-index: 1;
       width: 100%;
       max-width: 420px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 2.5rem;
-      padding: 3rem 1.5rem;
-      animation: fadeUp 0.6s ease;
+      padding: 5rem 1.5rem 4rem;
+      animation: fadeUp 1s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .done-badge {
@@ -43,11 +77,14 @@
       line-height: 1.9;
       text-align: left;
       max-width: 340px;
+      background: rgba(10,10,18,0.55);
+      padding: 1.4rem 1.6rem;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
     }
 
-    .done-about strong {
-      color: var(--text);
-      font-weight: normal;
+    .done-about a {
+      color: inherit;
       text-decoration: underline;
       text-underline-offset: 3px;
     }
@@ -58,7 +95,7 @@
       font-size: 0.65rem;
       letter-spacing: 0.2em;
       color: var(--text);
-      border: 1px solid var(--text);
+      border: 1px solid rgba(255,255,255,0.35);
       padding: 0.75rem 1.6rem;
       text-decoration: none;
       transition: background 0.15s, color 0.15s;
@@ -70,7 +107,7 @@
       color: var(--bg);
     }
 
-    /* --- leaderboard --- */
+    /* ---- leaderboard ---- */
     .wall-wrap {
       width: 100%;
       display: flex;
@@ -105,7 +142,7 @@
       background: transparent;
       color: var(--text);
     }
-    .wall-input::placeholder { color: var(--border); }
+    .wall-input::placeholder { color: var(--muted); }
 
     .wall-submit {
       font-family: var(--font);
@@ -138,7 +175,6 @@
       border-bottom: 1px solid var(--border);
       padding-bottom: 0.4rem;
     }
-    .wall-entry .name { color: var(--text); }
     .wall-entry span:last-child { color: var(--muted); }
 
     .wall-status {
@@ -164,7 +200,7 @@
       display: block;
       font-size: 0.55rem;
       letter-spacing: 0.18em;
-      color: var(--border);
+      color: rgba(255,255,255,0.2);
       margin-top: 0.4rem;
       transition: color 0.15s;
     }
@@ -172,6 +208,9 @@
   </style>
 </head>
 <body>
+
+  <canvas id="c"></canvas>
+
   <div class="done-wrap">
 
     <p class="done-badge">30 / 30</p>
@@ -181,7 +220,7 @@
     <div class="done-divider"></div>
 
     <p class="done-about">
-      Hi. I'm <a href="https://snanu.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;"><strong>Sandeep Nanu</strong></a>. Brand consultant, reluctant comedian,
+      Hi. I'm <a href="https://snanu.com" target="_blank" rel="noopener"><strong>Sandeep Nanu</strong></a>. Brand consultant, reluctant comedian,
       relentless tinkerer. Twenty years of strategy and storytelling by day.
       Bird photography, snake rescue, and vibe-coding by night.<br><br>
       I build things like DECIPHER because curiosity doesn't care
@@ -220,112 +259,158 @@
 
   </div>
 
-  <script src="../utils.js?v=3"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CPY3S2SCRM"></script>
   <script>
-    /* inject favicon */
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-CPY3S2SCRM');
+  </script>
+
+  <script>
+    /* ---- favicon ---- */
     (function () {
       var lnk = document.createElement('link');
       lnk.rel = 'icon'; lnk.type = 'image/svg+xml'; lnk.href = '../favicon.svg';
       document.head.appendChild(lnk);
     })();
 
-    /* ---- config ---- */
-    var FORM_URL   = 'https://docs.google.com/forms/d/e/1FAIpQLScN79E2Ok4Xq64d64SevmKBQOog8kK3pBu-pxeEoRRVNJJKkA/formResponse';
-    var ENTRY_ID   = 'entry.784658064';
-    var SHEET_CSV  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1wt_BDpVbDpN-GIVWv8ZlmStINLEmwV-kxcTbgkQoCv_ZutRAhXR_OCwoCFSKJvLk4wKniZcZHNXF/pub?output=csv';
+    /* ---- murmuration ---- */
+    var canvas = document.getElementById('c');
+    var ctx    = canvas.getContext('2d');
+    var W, H;
 
-    /* ---- submit name ---- */
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    var COUNT      = 180;
+    var SPEED      = 2.2;
+    var PERCEPTION = 80;
+    var SEPARATION = 28;
+    var SEP_FORCE  = 1.6;
+    var ALI_FORCE  = 0.9;
+    var COH_FORCE  = 0.8;
+    var NOISE      = 0.06;
+    var MAX_TURN   = 0.12;
+
+    var birds = [];
+    for (var i = 0; i < COUNT; i++) {
+      var a = Math.random() * Math.PI * 2;
+      birds.push({
+        x: W * 0.3 + (Math.random() - 0.5) * W * 0.4,
+        y: H * 0.4 + (Math.random() - 0.5) * H * 0.4,
+        vx: Math.cos(a) * SPEED,
+        vy: Math.sin(a) * SPEED
+      });
+    }
+
+    function update() {
+      for (var i = 0; i < COUNT; i++) {
+        var b = birds[i];
+        var sepX=0,sepY=0,aliX=0,aliY=0,cohX=0,cohY=0,n=0,ns=0;
+        for (var j = 0; j < COUNT; j++) {
+          if (i===j) continue;
+          var o=birds[j], dx=o.x-b.x, dy=o.y-b.y, d=Math.sqrt(dx*dx+dy*dy);
+          if (d<SEPARATION){sepX-=dx/(d+0.001);sepY-=dy/(d+0.001);ns++;}
+          if (d<PERCEPTION){aliX+=o.vx;aliY+=o.vy;cohX+=o.x;cohY+=o.y;n++;}
+        }
+        var ax=0,ay=0;
+        if(ns>0){ax+=(sepX/ns)*SEP_FORCE;ay+=(sepY/ns)*SEP_FORCE;}
+        if(n>0){
+          ax+=(aliX/n-b.vx)*ALI_FORCE; ay+=(aliY/n-b.vy)*ALI_FORCE;
+          ax+=(cohX/n-b.x)*COH_FORCE*0.01; ay+=(cohY/n-b.y)*COH_FORCE*0.01;
+        }
+        ax+=(Math.random()-0.5)*NOISE; ay+=(Math.random()-0.5)*NOISE;
+        var margin=120,bf=0.4;
+        if(b.x<margin)     ax+=bf*(margin-b.x)/margin;
+        if(b.x>W-margin)   ax-=bf*(b.x-(W-margin))/margin;
+        if(b.y<margin)     ay+=bf*(margin-b.y)/margin;
+        if(b.y>H-margin)   ay-=bf*(b.y-(H-margin))/margin;
+        var curA=Math.atan2(b.vy,b.vx),newA=Math.atan2(b.vy+ay,b.vx+ax);
+        var diff=newA-curA;
+        while(diff> Math.PI)diff-=Math.PI*2;
+        while(diff<-Math.PI)diff+=Math.PI*2;
+        diff=Math.max(-MAX_TURN,Math.min(MAX_TURN,diff));
+        var fa=curA+diff;
+        b.vx=Math.cos(fa)*SPEED; b.vy=Math.sin(fa)*SPEED;
+        b.x+=b.vx; b.y+=b.vy;
+      }
+    }
+
+    function drawBird(b) {
+      var a=Math.atan2(b.vy,b.vx),sz=5;
+      ctx.save();ctx.translate(b.x,b.y);ctx.rotate(a);
+      ctx.beginPath();
+      ctx.moveTo(sz,0);ctx.lineTo(-sz*0.6,sz*0.55);
+      ctx.lineTo(-sz*0.1,0);ctx.lineTo(-sz*0.6,-sz*0.55);
+      ctx.closePath();ctx.fill();ctx.restore();
+    }
+
+    function render() {
+      ctx.fillStyle='rgba(10,10,18,0.35)';ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='rgba(200,205,220,0.82)';
+      for(var i=0;i<COUNT;i++) drawBird(birds[i]);
+    }
+
+    (function loop(){update();render();requestAnimationFrame(loop);})();
+
+    /* ---- leaderboard ---- */
+    var FORM_URL  = 'https://docs.google.com/forms/d/e/1FAIpQLScN79E2Ok4Xq64d64SevmKBQOog8kK3pBu-pxeEoRRVNJJKkA/formResponse';
+    var ENTRY_ID  = 'entry.784658064';
+    var SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1wt_BDpVbDpN-GIVWv8ZlmStINLEmwV-kxcTbgkQoCv_ZutRAhXR_OCwoCFSKJvLk4wKniZcZHNXF/pub?output=csv';
+
     document.getElementById('wallBtn').addEventListener('click', function () {
       var name = document.getElementById('wallName').value.trim();
       if (!name) return;
-
       var status = document.getElementById('wallStatus');
       status.textContent = 'ADDING...';
-
       var data = new FormData();
       data.append(ENTRY_ID, name);
-
-      fetch(FORM_URL, { method: 'POST', body: data, mode: 'no-cors' })
-        .then(function () {
-          status.textContent = 'ADDED. WELCOME TO THE WALL.';
-          document.getElementById('wallName').value = '';
-          setTimeout(loadWall, 1500);
-        })
-        .catch(function () {
-          status.textContent = 'SOMETHING WENT WRONG. TRY AGAIN.';
-        });
+      fetch(FORM_URL, { method:'POST', body:data, mode:'no-cors' })
+        .then(function(){ status.textContent='ADDED. WELCOME TO THE WALL.'; document.getElementById('wallName').value=''; setTimeout(loadWall,1500); })
+        .catch(function(){ status.textContent='SOMETHING WENT WRONG. TRY AGAIN.'; });
     });
 
-    /* ---- load leaderboard ---- */
     function loadWall() {
-      fetch(SHEET_CSV)
-        .then(function (r) { return r.text(); })
-        .then(function (csv) {
-          var lines  = csv.trim().split('\n').slice(1); /* skip header */
-          var container = document.getElementById('wallNames');
-          container.innerHTML = '';
-
-          if (!lines.length || (lines.length === 1 && !lines[0])) {
-            container.innerHTML = '<p class="wall-status">Be the first.</p>';
-            return;
-          }
-
-          /* show latest 20, newest first */
-          lines.reverse().slice(0, 20).forEach(function (line) {
-            var parts = line.split(',');
-            var ts    = parts[0] ? parts[0].replace(/"/g, '').trim() : '';
-            var nm    = parts[1] ? parts[1].replace(/"/g, '').trim() : '';
-            if (!nm) return;
-
-            /* format date nicely */
-            var date = '';
-            try {
-              var d = new Date(ts);
-              date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
-            } catch(e) {}
-
-            var el = document.createElement('div');
-            el.className = 'wall-entry';
-            el.innerHTML = '<span class="name">' + escHtml(nm) + '</span><span>' + escHtml(date) + '</span>';
-            container.appendChild(el);
-          });
-        })
-        .catch(function () {
-          document.getElementById('wallNames').innerHTML =
-            '<p class="wall-status">Could not load.</p>';
+      fetch(SHEET_CSV).then(function(r){return r.text();}).then(function(csv){
+        var lines=csv.trim().split('\n').slice(1);
+        var container=document.getElementById('wallNames');
+        container.innerHTML='';
+        if(!lines.length||(lines.length===1&&!lines[0])){container.innerHTML='<p class="wall-status">Be the first.</p>';return;}
+        lines.reverse().slice(0,20).forEach(function(line){
+          var parts=line.split(',');
+          var ts=parts[0]?parts[0].replace(/"/g,'').trim():'';
+          var nm=parts[1]?parts[1].replace(/"/g,'').trim():'';
+          if(!nm)return;
+          var date='';
+          try{var d=new Date(ts);date=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'});}catch(e){}
+          var el=document.createElement('div');
+          el.className='wall-entry';
+          el.innerHTML='<span class="name">'+escHtml(nm)+'</span><span>'+escHtml(date)+'</span>';
+          container.appendChild(el);
         });
+      }).catch(function(){document.getElementById('wallNames').innerHTML='<p class="wall-status">Could not load.</p>';});
     }
 
-    function escHtml(s) {
-      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
+    function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
     loadWall();
 
-    /* remove the utils.js "You like it?" footer — this page has its own CTA */
-    document.addEventListener('DOMContentLoaded', function () {
-      document.querySelectorAll('body > div').forEach(function (d) {
-        if (d.style.position === 'fixed' && d.querySelector('a[href*="razorpay"]')) {
-          d.remove();
-        }
-      });
-    });
-
     /* ---- share ---- */
     document.getElementById('shareBtn').addEventListener('click', function () {
-      var url  = 'https://decipher.shiftingradius.com';
-      var hint = document.querySelector('.share-hint');
-
-      if (navigator.share) {
-        navigator.share({ title: 'DECIPHER — Can you solve all 30 levels?', url: url }).catch(function () {});
+      var url='https://decipher.shiftingradius.com';
+      var hint=document.querySelector('.share-hint');
+      if(navigator.share){
+        navigator.share({title:'DECIPHER — Can you solve all 30 levels?',url:url}).catch(function(){});
       } else {
-        navigator.clipboard.writeText(url).then(function () {
-          var orig = hint.textContent;
-          hint.textContent = 'LINK COPIED';
-          setTimeout(function () { hint.textContent = orig; }, 2000);
-        }).catch(function () {
-          window.open(url, '_blank');
-        });
+        navigator.clipboard.writeText(url).then(function(){
+          var orig=hint.textContent;hint.textContent='LINK COPIED';
+          setTimeout(function(){hint.textContent=orig;},2000);
+        }).catch(function(){window.open(url,'_blank');});
       }
     });
   </script>
