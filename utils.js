@@ -116,14 +116,23 @@ function bindAnswer(inputId, word, nextUrl, levelNum) {
 
 function onLongPress(el, ms, callback) {
   var timer = null;
-  var start = function (e) { e.preventDefault(); timer = setTimeout(callback, ms); };
+  var startX, startY;
+  var start = function (e) {
+    e.preventDefault();
+    if (e.touches) { startX = e.touches[0].clientX; startY = e.touches[0].clientY; }
+    timer = setTimeout(callback, ms);
+  };
   var cancel = function () { clearTimeout(timer); timer = null; };
   el.addEventListener('mousedown', start);
   el.addEventListener('touchstart', start, { passive: false });
   el.addEventListener('mouseup', cancel);
   el.addEventListener('mouseleave', cancel);
   el.addEventListener('touchend', cancel);
-  el.addEventListener('touchmove', cancel);
+  el.addEventListener('touchmove', function (e) {
+    var dx = e.touches[0].clientX - startX;
+    var dy = e.touches[0].clientY - startY;
+    if (Math.sqrt(dx * dx + dy * dy) > 15) cancel();
+  }, { passive: true });
 }
 
 function onDoubleTap(el, callback) {
