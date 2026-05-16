@@ -252,7 +252,7 @@
 
     <!-- LEADERBOARD -->
     <div class="wall-wrap">
-      <p class="wall-label">WALL OF DECIPHERERS</p>
+      <p class="wall-label" id="wallLabel">WALL OF DECIPHERERS</p>
 
       <div class="wall-input-row">
         <input class="wall-input" id="wallName" type="text"
@@ -409,16 +409,19 @@
         var container=document.getElementById('wallNames');
         container.innerHTML='';
         if(!lines.length||(lines.length===1&&!lines[0])){container.innerHTML='<p class="wall-status">Be the first.</p>';return;}
-        lines.reverse().slice(0,20).forEach(function(line){
+        var total=lines.length;
+        document.getElementById('wallLabel').textContent='WALL OF DECIPHERERS — '+total+' SOLVED';
+        lines.reverse().slice(0,20).forEach(function(line,i){
           var parts=line.split(',');
           var ts=parts[0]?parts[0].replace(/"/g,'').trim():'';
           var nm=parts[1]?parts[1].replace(/"/g,'').trim():'';
           if(!nm)return;
           var date='';
           try{var d=new Date(ts);date=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'});}catch(e){}
+          var rank=total-i;
           var el=document.createElement('div');
           el.className='wall-entry';
-          el.innerHTML='<span class="name">'+escHtml(nm)+'</span><span>'+escHtml(date)+'</span>';
+          el.innerHTML='<span><span style="color:var(--muted);font-size:0.6rem;margin-right:0.6rem;">#'+rank+'</span>'+escHtml(nm)+'</span><span>'+escHtml(date)+'</span>';
           container.appendChild(el);
         });
       }).catch(function(){document.getElementById('wallNames').innerHTML='<p class="wall-status">Could not load.</p>';});
