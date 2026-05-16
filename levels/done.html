@@ -377,6 +377,14 @@
     var ENTRY_ID  = 'entry.784658064';
     var SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1wt_BDpVbDpN-GIVWv8ZlmStINLEmwV-kxcTbgkQoCv_ZutRAhXR_OCwoCFSKJvLk4wKniZcZHNXF/pub?output=csv';
 
+    /* hide input if already submitted */
+    (function () {
+      if (localStorage.getItem('decipherWallAdded')) {
+        document.getElementById('wallName').closest('.wall-input-row').style.display = 'none';
+        document.getElementById('wallStatus').textContent = "YOU'RE ALREADY ON THE WALL.";
+      }
+    })();
+
     document.getElementById('wallBtn').addEventListener('click', function () {
       var name = document.getElementById('wallName').value.trim();
       if (!name) return;
@@ -385,7 +393,13 @@
       var data = new FormData();
       data.append(ENTRY_ID, name);
       fetch(FORM_URL, { method:'POST', body:data, mode:'no-cors' })
-        .then(function(){ status.textContent='ADDED. WELCOME TO THE WALL.'; document.getElementById('wallName').value=''; setTimeout(loadWall,1500); })
+        .then(function(){
+          localStorage.setItem('decipherWallAdded', '1');
+          status.textContent='ADDED. WELCOME TO THE WALL.';
+          document.getElementById('wallName').value='';
+          document.getElementById('wallName').closest('.wall-input-row').style.display = 'none';
+          setTimeout(loadWall,1500);
+        })
         .catch(function(){ status.textContent='SOMETHING WENT WRONG. TRY AGAIN.'; });
     });
 
