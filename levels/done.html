@@ -30,6 +30,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
+      pointer-events: none;
       z-index: 0;
     }
 
@@ -43,12 +44,12 @@
       align-items: center;
       gap: 2.5rem;
       padding: 5rem 1.5rem 4rem;
-      animation: fadeUp 1s ease both;
+      animation: fadeIn 1s ease both;
     }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(18px); }
-      to   { opacity: 1; transform: translateY(0); }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
 
     .done-badge {
@@ -77,6 +78,10 @@
       line-height: 1.9;
       text-align: left;
       max-width: 340px;
+      background: rgba(10,10,18,0.55);
+      padding: 1.4rem 1.6rem;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
     }
 
     .done-about a {
@@ -216,18 +221,13 @@
     <div class="done-divider"></div>
 
     <p class="done-about">
-      Hi. I'm <a href="https://snanu.com" target="_blank" rel="noopener"><strong>Sandeep Nanu</strong></a>. Brand consultant, reluctant comedian,
-      relentless tinkerer. Twenty years of strategy and storytelling by day.
-      Bird photography, snake rescue, and vibe-coding by night.<br><br>
-      I build things like DECIPHER because curiosity doesn't care
-      about job titles. I wanted a puzzle that felt like the internet itself.
-      Layered, a little strange, rewarding if you pay attention.<br><br>
+      Hi. I'm <a href="https://snanu.com" target="_blank" rel="noopener"><strong>Sandeep Nanu</strong></a>. Twenty years in brand strategy, some time on stage doing stand-up, a camera pointed at birds most weekends, someone who rescues snakes (seriously), and a habit of staying up too late building things nobody asked for. DECIPHER is one of those things. I wanted a puzzle that felt like the internet itself. Layered, a little strange, rewarding if you pay attention.<br><br>
       If it made you think, smile, or swear at your screen,
       that's exactly what I was going for.
     </p>
 
     <a class="support-btn" href="https://razorpay.me/@sandeepnanu" target="_blank" rel="noopener">
-      SUPPORT &amp; BUILD MORE
+      LIKED IT? SUPPORT IT.
     </a>
 
     <div class="done-divider"></div>
@@ -347,8 +347,8 @@
     }
 
     function render() {
-      ctx.fillStyle='rgba(10,10,18,0.35)';ctx.fillRect(0,0,W,H);
-      ctx.fillStyle='rgba(200,205,220,0.82)';
+      ctx.fillStyle='rgba(10,10,18,0.5)';ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='rgba(200,205,220,0.3)';
       for(var i=0;i<COUNT;i++) drawBird(birds[i]);
     }
 
