@@ -182,7 +182,14 @@
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
+      max-height: 220px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
     }
+    .wall-names::-webkit-scrollbar { width: 3px; }
+    .wall-names::-webkit-scrollbar-track { background: transparent; }
+    .wall-names::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
     .wall-entry {
       display: flex;
@@ -416,7 +423,7 @@
         if(!lines.length||(lines.length===1&&!lines[0])){container.innerHTML='<p class="wall-status">Be the first.</p>';return;}
         var total=lines.length;
         document.getElementById('wallLabel').textContent='WALL OF DECIPHERERS — '+total+' SOLVED';
-        lines.reverse().slice(0,20).forEach(function(line,i){
+        lines.reverse().forEach(function(line,i){
           var parts=line.split(',');
           var ts=parts[0]?parts[0].replace(/"/g,'').trim():'';
           var nm=parts[1]?parts[1].replace(/"/g,'').trim():'';
