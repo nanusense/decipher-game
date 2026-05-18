@@ -171,21 +171,30 @@ function onSwipe(el, direction, callback) {
     'style="color:inherit;text-decoration:none;"> Like it? Support it. No pressure.</a>';
 
   var expanded = false;
+  var hideTimer = null;
 
-  el.addEventListener('mouseenter', function () {
-    el.style.maxWidth = '300px';
-  });
-  el.addEventListener('mouseleave', function () {
+  function collapse() {
     el.style.maxWidth = '22px';
     expanded = false;
-  });
+    clearTimeout(hideTimer);
+    hideTimer = null;
+  }
+
+  function expand() {
+    el.style.maxWidth = '380px';
+    expanded = true;
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(collapse, 5000);
+  }
+
+  el.addEventListener('mouseenter', expand);
+  el.addEventListener('mouseleave', collapse);
 
   /* mobile: first tap expands, second tap follows the link */
   el.addEventListener('click', function (e) {
     if (!expanded) {
       e.preventDefault();
-      expanded = true;
-      el.style.maxWidth = '300px';
+      expand();
     }
   });
 
