@@ -173,7 +173,7 @@ function onSwipe(el, direction, callback) {
   var expanded = false;
 
   el.addEventListener('mouseenter', function () {
-    el.style.maxWidth = '220px';
+    el.style.maxWidth = '300px';
   });
   el.addEventListener('mouseleave', function () {
     el.style.maxWidth = '22px';
@@ -185,7 +185,7 @@ function onSwipe(el, direction, callback) {
     if (!expanded) {
       e.preventDefault();
       expanded = true;
-      el.style.maxWidth = '220px';
+      el.style.maxWidth = '300px';
     }
   });
 
