@@ -166,9 +166,9 @@ function onSwipe(el, direction, callback) {
     'transition:max-width 0.3s ease,color 0.15s;cursor:pointer;' +
     '-webkit-tap-highlight-color:transparent;';
   el.innerHTML =
-    '<span style="user-select:none;">•</span>' +
+    '<span style="user-select:none;">♥</span>' +
     '<a href="https://razorpay.me/@sandeepnanu" target="_blank" rel="noopener" ' +
-    'style="color:inherit;text-decoration:none;"> Like it? Support it.</a>';
+    'style="color:inherit;text-decoration:none;"> Like it? Support it. No pressure.</a>';
 
   var expanded = false;
 
