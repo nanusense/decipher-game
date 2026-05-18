@@ -172,6 +172,9 @@ function onSwipe(el, direction, callback) {
 
   var expanded = false;
   var hideTimer = null;
+  var isTouch = false;
+
+  el.addEventListener('touchstart', function () { isTouch = true; }, { passive: true, once: true });
 
   function collapse() {
     el.style.maxWidth = '22px';
@@ -187,10 +190,11 @@ function onSwipe(el, direction, callback) {
     hideTimer = setTimeout(collapse, 5000);
   }
 
-  el.addEventListener('mouseenter', expand);
-  el.addEventListener('mouseleave', collapse);
+  /* desktop: hover expands/collapses immediately */
+  el.addEventListener('mouseenter', function () { if (!isTouch) expand(); });
+  el.addEventListener('mouseleave', function () { if (!isTouch) collapse(); });
 
-  /* mobile: first tap expands, second tap follows the link */
+  /* mobile: first tap expands + starts timer, second tap follows the link */
   el.addEventListener('click', function (e) {
     if (!expanded) {
       e.preventDefault();
