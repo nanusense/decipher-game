@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #f0eeeb;
+      min-height: 100dvh;
+      overflow: hidden;
+    }
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: block;
+      touch-action: none;
+    }
+    .home-link { z-index: 10; }
+  </style>
+</head>
+<body>
+  <span class="badge">44</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+  <canvas id="c"></canvas>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var canvas = document.getElementById('c');
+    var ctx    = canvas.getContext('2d');
+    var W, H, CX;
+    var solved = false;
+
+    var FONT_SIZE  = 30;
+    var FONT       = 'bold ' + FONT_SIZE + 'px "Courier New", monospace';
+    var SCRATCH_R  = 22;
+    var BG         = '#f0eeeb';
+
+    var LINE1_Y, LINE2_Y;
+    var imBounds = {};
+
+    // Scratch tracking
+    var scratchPts = [];   // for visual
+    var GCOLS = 16, GROWS = 5;
+    var grid = [];
+
+    function initGrid() {
+      grid = [];
+      for (var r = 0; r < GROWS; r++) {
+        grid[r] = [];
+        for (var c = 0; c < GCOLS; c++) grid[r][c] = false;
+      }
+    }
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      CX = W / 2;
+
+      ctx.font = FONT;
+      var l1W = ctx.measureText('IMPOSSIBLE').width;
+      var imW = ctx.measureText('IM').width;
+
+      LINE1_Y = H * 0.44;
+      LINE2_Y = LINE1_Y + FONT_SIZE * 1.7;
+
+      var l1Left = CX - l1W / 2;
+      imBounds = {
+        left:   l1Left - 6,
+        right:  l1Left + imW + 6,
+        top:    LINE1_Y - FONT_SIZE - 4,
+        bottom: LINE1_Y + 6
+      };
+
+      scratchPts = [];
+      initGrid();
+      drawScene(false);
+    }
+
+    // ── Draw ──
+    function drawScene(win) {
+      ctx.fillStyle = BG;
+      ctx.fillRect(0, 0, W, H);
+      ctx.font = FONT;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+
+      if (win) {
+        ctx.fillStyle = '#5cb85c';
+        ctx.fillText('POSSIBLE', CX, LINE1_Y);
+        ctx.fillStyle = '#666';
+        ctx.fillText('to move forward.', CX, LINE2_Y);
+      } else {
+        // Line 1
+        ctx.fillStyle = '#111';
+        ctx.fillText('IMPOSSIBLE', CX, LINE1_Y);
+        // Line 2 — slightly muted
+        ctx.fillStyle = '#666';
+        ctx.fillText('to move forward.', CX, LINE2_Y);
+
+        // Erase scratched areas with background circles
+        ctx.fillStyle = BG;
+        for (var i = 0; i < scratchPts.length; i++) {
+          ctx.beginPath();
+          ctx.arc(scratchPts[i].x, scratchPts[i].y, SCRATCH_R, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // ── Scratch ──
+    function doScratch(x, y) {
+      // Only register in and around the IM area
+      var pad = SCRATCH_R + 4;
+      if (x < imBounds.left  - pad || x > imBounds.right  + pad ||
+          y < imBounds.top   - pad || y > imBounds.bottom + pad) return;
+
+      scratchPts.push({ x: x, y: y });
+
+      // Mark grid cells covered by this touch
+      var iW = imBounds.right - imBounds.left;
+      var iH = imBounds.bottom - imBounds.top;
+      var cellW = iW / GCOLS;
+      var cellH = iH / GROWS;
+      for (var r = 0; r < GROWS; r++) {
+        for (var c = 0; c < GCOLS; c++) {
+          var cx = imBounds.left + (c + 0.5) * cellW;
+          var cy = imBounds.top  + (r + 0.5) * cellH;
+          var dx = cx - x, dy = cy - y;
+          if (dx * dx + dy * dy < SCRATCH_R * SCRATCH_R) {
+            grid[r][c] = true;
+          }
+        }
+      }
+
+      drawScene(false);
+      checkWin();
+    }
+
+    function checkWin() {
+      if (solved) return;
+      var count = 0;
+      for (var r = 0; r < GROWS; r++)
+        for (var c = 0; c < GCOLS; c++)
+          if (grid[r][c]) count++;
+      if (count / (GCOLS * GROWS) > 0.90) win();
+    }
+
+    function win() {
+      solved = true;
+      vibrate([20, 40, 20]);
+      drawScene(true);
+      setTimeout(function() {
+        completeLevel('../disputed/', 14);
+      }, 3000);
+    }
+
+    // ── Touch ──
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (solved) return;
+      for (var i = 0; i < e.touches.length; i++) {
+        doScratch(e.touches[i].clientX, e.touches[i].clientY);
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    window.addEventListener('resize', resize);
+    resize();
+  </script>
+</body>
+</html>

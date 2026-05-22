@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    :root { --level-accent: #111; }
+
+    body { overflow: hidden; }
+
+    .scene {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2.2rem;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .prompt {
+      font-size: 1.05rem;
+      letter-spacing: 0.1em;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .buzz-wrap {
+      opacity: 0.11;
+    }
+
+    #drawCanvas {
+      position: fixed;
+      inset: 0;
+      touch-action: none;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">37</span>
+  <a href="../../index.html" class="home-link" style="z-index:20">HOME</a>
+
+  <div class="scene">
+    <p class="prompt">To________ and beyond.</p>
+
+    <!-- Buzz Lightyear silhouette -->
+    <div class="buzz-wrap">
+      <svg viewBox="0 0 160 252" width="145" height="228"
+           fill="none" stroke="#111" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+
+        <!-- Helmet (round top, chin below) -->
+        <path d="M 48 74 Q 48 26 80 26 Q 112 26 112 74 L 108 93 Q 80 99 52 93 Z"/>
+
+        <!-- Visor arc -->
+        <path d="M 56 58 Q 80 47 104 58" stroke-width="1.5"/>
+
+        <!-- Chin / collar seam -->
+        <path d="M 54 87 Q 80 93 106 87" stroke-width="1.5"/>
+
+        <!-- Left jetpack wing — most iconic Buzz feature -->
+        <path d="M 51 90 L 4 58 L 7 118 L 52 112"/>
+
+        <!-- Right jetpack wing -->
+        <path d="M 109 90 L 156 58 L 153 118 L 108 112"/>
+
+        <!-- Wing inner structure lines -->
+        <path d="M 28 76 L 30 108" stroke-width="1.2" opacity="0.7"/>
+        <path d="M 132 76 L 130 108" stroke-width="1.2" opacity="0.7"/>
+
+        <!-- Body / torso -->
+        <path d="M 56 107 L 48 170 Q 80 178 112 170 L 104 107"/>
+
+        <!-- Chest circle (insignia) -->
+        <circle cx="80" cy="136" r="10" stroke-width="1.5"/>
+
+        <!-- Belt line -->
+        <path d="M 50 160 Q 80 166 110 160" stroke-width="1.5"/>
+
+        <!-- Left arm -->
+        <path d="M 52 120 L 32 160 L 45 166 L 60 130"/>
+
+        <!-- Right arm -->
+        <path d="M 108 120 L 128 160 L 115 166 L 100 130"/>
+
+        <!-- Left leg -->
+        <path d="M 58 170 L 52 238 L 70 238 L 80 193"/>
+
+        <!-- Right leg -->
+        <path d="M 102 170 L 108 238 L 90 238 L 80 193"/>
+
+        <!-- Boot cuffs -->
+        <path d="M 52 228 Q 61 242 70 237" stroke-width="1.5"/>
+        <path d="M 108 228 Q 99 242 90 237" stroke-width="1.5"/>
+
+      </svg>
+    </div>
+  </div>
+
+  <canvas id="drawCanvas"></canvas>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var canvas = document.getElementById('drawCanvas');
+    var ctx    = canvas.getContext('2d');
+
+    function resize() {
+      // Preserve drawing on resize? Not needed — just clear.
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', function () {
+      if (!completed) { points = []; resize(); }
+    });
+    resize();
+
+    var points    = [];
+    var drawing   = false;
+    var completed = false;
+    var drawColor = '#111111';
+    var fadeId    = null;
+
+    // ── Render ──
+    function renderPath(alpha) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (points.length < 2) return;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (var i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+      ctx.strokeStyle = drawColor;
+      ctx.lineWidth   = 4;
+      ctx.lineCap     = 'round';
+      ctx.lineJoin    = 'round';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ── Touch ──
+    canvas.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      if (completed) return;
+      if (fadeId) { clearInterval(fadeId); fadeId = null; }
+      points    = [];
+      drawing   = true;
+      drawColor = '#111111';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var t = e.touches[0];
+      points.push({ x: t.clientX, y: t.clientY });
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', function (e) {
+      e.preventDefault();
+      if (!drawing || completed) return;
+      var t = e.touches[0];
+      points.push({ x: t.clientX, y: t.clientY });
+      renderPath(1);
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      if (!drawing || completed) return;
+      drawing = false;
+      analyze();
+    }, { passive: false });
+
+    // ── Geometry helpers ──
+    function segIntersect(a, b, c, d) {
+      var dx1 = b.x - a.x, dy1 = b.y - a.y;
+      var dx2 = d.x - c.x, dy2 = d.y - c.y;
+      var cross = dx1 * dy2 - dy1 * dx2;
+      if (Math.abs(cross) < 1e-6) return null;
+      var dx3 = c.x - a.x, dy3 = c.y - a.y;
+      var t = (dx3 * dy2 - dy3 * dx2) / cross;
+      var u = (dx3 * dy1 - dy3 * dx1) / cross;
+      if (t > 0.02 && t < 0.98 && u > 0.02 && u < 0.98) {
+        return { x: a.x + t * dx1, y: a.y + t * dy1 };
+      }
+      return null;
+    }
+
+    function findCrossings(pts) {
+      // Downsample to ~80 points for performance
+      var step = Math.max(1, Math.floor(pts.length / 80));
+      var s = [];
+      for (var i = 0; i < pts.length; i += step) s.push(pts[i]);
+      if (s[s.length - 1] !== pts[pts.length - 1]) s.push(pts[pts.length - 1]);
+
+      var found = [];
+      var gap   = 8; // segments must be at least this far apart in the sequence
+
+      for (var i = 0; i < s.length - 1; i++) {
+        for (var j = i + gap; j < s.length - 1; j++) {
+          var pt = segIntersect(s[i], s[i + 1], s[j], s[j + 1]);
+          if (!pt) continue;
+          // Deduplicate crossings within 40px of each other
+          var dup = false;
+          for (var k = 0; k < found.length; k++) {
+            var ddx = pt.x - found[k].x, ddy = pt.y - found[k].y;
+            if (ddx * ddx + ddy * ddy < 1600) { dup = true; break; }
+          }
+          if (!dup) found.push(pt);
+        }
+      }
+      return found;
+    }
+
+    // ── Analyze ──
+    function analyze() {
+      if (points.length < 40) { failDraw(); return; }
+
+      // Bounding box
+      var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (var i = 0; i < points.length; i++) {
+        if (points[i].x < minX) minX = points[i].x;
+        if (points[i].x > maxX) maxX = points[i].x;
+        if (points[i].y < minY) minY = points[i].y;
+        if (points[i].y > maxY) maxY = points[i].y;
+      }
+      var w = maxX - minX;
+      var h = maxY - minY;
+
+      // Must span a decent area
+      if (w < 80 || h < 35) { failDraw(); return; }
+
+      // Infinity symbol is wider than tall (roughly 2:1)
+      if (w < h * 1.1) { failDraw(); return; }
+
+      var crossings = findCrossings(points);
+
+      // Expect exactly 1 crossing point — allow 1–4 for sloppy draws
+      if (crossings.length < 1 || crossings.length > 4) { failDraw(); return; }
+
+      // The crossing must sit horizontally near center (not at the edges)
+      var cx = crossings[0].x;
+      var relX = (cx - minX) / w;
+      if (relX < 0.28 || relX > 0.72) { failDraw(); return; }
+
+      // Both loops must be present: points on each side of the crossing
+      var margin  = w * 0.18;
+      var hasLeft = false, hasRight = false;
+      for (var i = 0; i < points.length; i++) {
+        if (points[i].x < cx - margin) hasLeft  = true;
+        if (points[i].x > cx + margin) hasRight = true;
+        if (hasLeft && hasRight) break;
+      }
+      if (!hasLeft || !hasRight) { failDraw(); return; }
+
+      successDraw();
+    }
+
+    // ── Outcomes ──
+    function failDraw() {
+      var alpha = 1;
+      fadeId = setInterval(function () {
+        alpha -= 0.055;
+        if (alpha <= 0) {
+          clearInterval(fadeId);
+          fadeId = null;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          return;
+        }
+        renderPath(alpha);
+      }, 30);
+    }
+
+    function successDraw() {
+      completed = true;
+      drawColor = '#7ec8a4';
+      renderPath(1);
+      setTimeout(function () {
+        completeLevel('../combination/', 7);
+      }, 2500);
+    }
+  </script>
+</body>
+</html>

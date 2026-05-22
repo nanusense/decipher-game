@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    :root { --level-accent: #111; }
+
+    .page { gap: 1.8rem; }
+
+    .clue-txt {
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      color: var(--text);
+      text-align: center;
+      line-height: 2;
+      max-width: 280px;
+    }
+
+    .decipher-line {
+      font-size: 1.05rem;
+      letter-spacing: 0.1em;
+      color: var(--text);
+      text-align: center;
+      font-weight: bold;
+      transition: color 0.35s ease;
+    }
+    .decipher-line.correct { color: #7ec8a4; }
+    .decipher-line.wrong   { color: #ef4444; }
+
+    #dialCanvas {
+      display: block;
+      touch-action: none;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">38</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <div class="page">
+    <p class="clue-txt">If I were to write the beginner's guide<br>to this game, it would be called</p>
+    <p class="decipher-line" id="decipherLine">Decipher <span id="combo">_ _ _</span></p>
+    <canvas id="dialCanvas"></canvas>
+  </div>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var canvas  = document.getElementById('dialCanvas');
+    var ctx     = canvas.getContext('2d');
+    var comboEl = document.getElementById('combo');
+    var lineEl  = document.getElementById('decipherLine');
+
+    var SIZE = Math.min(window.innerWidth - 48, 300);
+    canvas.width = canvas.height = SIZE;
+    var CX = SIZE / 2, CY = SIZE / 2;
+
+    var STEP   = 36;         // degrees per number (360/10)
+    var TARGET = [1, 0, 1];
+    var completed = false;
+    var wrongTimer = null;
+    var animId = null;
+
+    // Ring definitions (as fractions of SIZE/2)
+    // Starting values: 5, 4, 6 — clearly not the answer, all require deliberate drag
+    var START_VALS = [5, 4, 6];
+
+    var RINGS = [
+      { outer: 0.50, inner: 0.37 }, // outermost
+      { outer: 0.37, inner: 0.25 }, // middle
+      { outer: 0.25, inner: 0.13 }  // inner
+    ].map(function (r, i) {
+      var o   = r.outer * SIZE, n = r.inner * SIZE;
+      var rot = -(START_VALS[i] * STEP); // rotate so starting value sits at top
+      return {
+        outer:      o,
+        inner:      n,
+        textR:      (o + n) / 2,
+        rotation:   rot,
+        target:     rot,
+        hasBeenSet: false,
+        fontSize:   [16, 13, 11][i]
+      };
+    });
+
+    // ── Helpers ──
+    function toDeg(rad) { return rad * 180 / Math.PI; }
+    function toRad(deg) { return deg * Math.PI / 180; }
+
+    function angleTo(x, y) {
+      return toDeg(Math.atan2(y - CY, x - CX));
+    }
+
+    function distTo(x, y) {
+      return Math.sqrt((x - CX) * (x - CX) + (y - CY) * (y - CY));
+    }
+
+    function ringAt(dist) {
+      for (var i = 0; i < RINGS.length; i++) {
+        if (dist >= RINGS[i].inner && dist <= RINGS[i].outer) return i;
+      }
+      return -1;
+    }
+
+    function getValue(ring) {
+      return (((Math.round(-ring.target / STEP)) % 10) + 10) % 10;
+    }
+
+    function updateCombo() {
+      comboEl.textContent = RINGS.map(function (r) {
+        return r.hasBeenSet ? getValue(r) : '_';
+      }).join(' ');
+    }
+
+    // ── Draw ──
+    function drawRing(ring, idx) {
+      var fills = ['#f5f5f5', '#ededed', '#e5e5e5'];
+
+      ctx.save();
+
+      // Clip to annulus
+      ctx.beginPath();
+      ctx.arc(CX, CY, ring.outer, 0, Math.PI * 2, false);
+      ctx.arc(CX, CY, ring.inner, 0, Math.PI * 2, true);
+      ctx.clip();
+
+      // Background
+      ctx.beginPath();
+      ctx.arc(CX, CY, ring.outer, 0, Math.PI * 2);
+      ctx.fillStyle = fills[idx];
+      ctx.fill();
+
+      // Highlight slot at 12 o'clock
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(CX, CY, ring.outer - 1, toRad(-100), toRad(-80), false);
+      ctx.arc(CX, CY, ring.inner + 1, toRad(-80),  toRad(-100), true);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(0,0,0,0.09)';
+      ctx.fill();
+      ctx.restore();
+
+      // Numbers (rotate ring, draw numbers upright)
+      ctx.translate(CX, CY);
+      ctx.rotate(toRad(ring.rotation));
+
+      ctx.font = 'bold ' + ring.fontSize + 'px Courier New, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      for (var i = 0; i < 10; i++) {
+        var a  = toRad(i * STEP);
+        var nx = Math.sin(a) * ring.textR;
+        var ny = -Math.cos(a) * ring.textR;
+
+        ctx.save();
+        ctx.translate(nx, ny);
+        ctx.rotate(toRad(-ring.rotation)); // keep text upright
+        ctx.fillStyle = '#111';
+        ctx.fillText(i.toString(), 0, 0);
+        ctx.restore();
+      }
+
+      ctx.restore();
+
+      // Ring borders
+      [ring.outer, ring.inner].forEach(function (r) {
+        ctx.beginPath();
+        ctx.arc(CX, CY, r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#bbb';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+    }
+
+    function drawCenter() {
+      var r = RINGS[2].inner;
+      var unlocked = completed;
+
+      // Centre circle — green when unlocked
+      ctx.beginPath();
+      ctx.arc(CX, CY, r, 0, Math.PI * 2);
+      ctx.fillStyle = unlocked ? '#7ec8a4' : '#1a1a1a';
+      ctx.fill();
+
+      var bodyColor   = unlocked ? '#ffffff' : '#3a3a3a';
+      var shackColor  = unlocked ? '#ffffff' : '#3a3a3a';
+      var holeColor   = unlocked ? '#7ec8a4' : '#1a1a1a';
+
+      // Padlock body
+      var lw = r * 0.45, lh = r * 0.42, lx = CX - lw / 2, ly = CY - lh * 0.1;
+      ctx.beginPath();
+      ctx.roundRect(lx, ly, lw, lh, 3);
+      ctx.fillStyle = bodyColor;
+      ctx.fill();
+
+      // Shackle — lifted/open when unlocked
+      if (unlocked) {
+        // Open shackle: right side detached and raised
+        ctx.beginPath();
+        ctx.arc(CX, ly, lw * 0.32, Math.PI, Math.PI * 1.5);
+        ctx.strokeStyle = shackColor;
+        ctx.lineWidth = r * 0.14;
+        ctx.stroke();
+      } else {
+        // Closed shackle
+        ctx.beginPath();
+        ctx.arc(CX, ly, lw * 0.32, Math.PI, Math.PI * 2);
+        ctx.strokeStyle = shackColor;
+        ctx.lineWidth = r * 0.14;
+        ctx.stroke();
+      }
+
+      // Keyhole
+      ctx.beginPath();
+      ctx.arc(CX, ly + lh * 0.42, r * 0.1, 0, Math.PI * 2);
+      ctx.fillStyle = holeColor;
+      ctx.fill();
+      ctx.fillRect(CX - r * 0.05, ly + lh * 0.42, r * 0.1, r * 0.18);
+    }
+
+    function drawIndicator() {
+      // Triangle pointer at top
+      var ty = CY - RINGS[0].outer - 6;
+      ctx.beginPath();
+      ctx.moveTo(CX,      ty + 14);
+      ctx.lineTo(CX - 10, ty);
+      ctx.lineTo(CX + 10, ty);
+      ctx.closePath();
+      ctx.fillStyle = '#111';
+      ctx.fill();
+    }
+
+    function drawFrame() {
+      ctx.clearRect(0, 0, SIZE, SIZE);
+
+      // Lerp rings toward targets
+      var moving = false;
+      RINGS.forEach(function (r) {
+        var diff = r.target - r.rotation;
+        if (diff > 180)  diff -= 360;
+        if (diff < -180) diff += 360;
+        if (Math.abs(diff) > 0.4) {
+          r.rotation += diff * 0.2;
+          moving = true;
+        } else {
+          r.rotation = r.target;
+        }
+      });
+
+      for (var i = RINGS.length - 1; i >= 0; i--) drawRing(RINGS[i], i);
+      drawCenter();
+      drawIndicator();
+
+      animId = (moving || drag) ? requestAnimationFrame(drawFrame) : null;
+    }
+
+    function kick() {
+      if (!animId) animId = requestAnimationFrame(drawFrame);
+    }
+
+    kick();
+
+    // ── Touch ──
+    var drag = null;
+    var canvasRect = canvas.getBoundingClientRect();
+
+    canvas.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      if (completed) return;
+      canvasRect = canvas.getBoundingClientRect();
+      var t  = e.changedTouches[0];
+      var x  = t.clientX - canvasRect.left;
+      var y  = t.clientY - canvasRect.top;
+      var ri = ringAt(distTo(x, y));
+      if (ri < 0) return;
+      drag = { ri: ri, startAngle: angleTo(x, y), startTarget: RINGS[ri].target };
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', function (e) {
+      e.preventDefault();
+      if (!drag || completed) return;
+      var t     = e.changedTouches[0];
+      var x     = t.clientX - canvasRect.left;
+      var y     = t.clientY - canvasRect.top;
+      var angle = angleTo(x, y);
+      var delta = angle - drag.startAngle;
+      if (delta >  180) delta -= 360;
+      if (delta < -180) delta += 360;
+      RINGS[drag.ri].target     = drag.startTarget + delta;
+      RINGS[drag.ri].hasBeenSet = true;
+      updateCombo();
+      kick();
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      if (!drag) return;
+      var ring  = RINGS[drag.ri];
+      ring.target = Math.round(ring.target / STEP) * STEP;
+      drag = null;
+      updateCombo();
+      kick();
+      if (RINGS.every(function (r) { return r.hasBeenSet; }) && !completed) {
+        checkCombination();
+      }
+    }, { passive: false });
+
+    // ── Logic ──
+    function checkCombination() {
+      var vals = RINGS.map(getValue);
+      var correct = vals.every(function (v, i) { return v === TARGET[i]; });
+      correct ? onSuccess() : onWrong();
+    }
+
+    function onSuccess() {
+      completed = true;
+      lineEl.classList.add('correct');
+      kick(); // redraw so lock switches to unlocked state
+      setTimeout(function () {
+        completeLevel('../brain/', 8);
+      }, 3000);
+    }
+
+    function onWrong() {
+      clearTimeout(wrongTimer);
+      lineEl.classList.add('wrong');
+      wrongTimer = setTimeout(function () {
+        lineEl.classList.remove('wrong');
+        RINGS.forEach(function (r, i) { r.target = -(START_VALS[i] * STEP); r.hasBeenSet = false; });
+        comboEl.textContent = '_ _ _';
+        kick();
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

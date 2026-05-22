@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    :root { --level-accent: #111; }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f0eeeb;
+      overflow: hidden;
+      padding: 0;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #stage {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      overflow: hidden;
+    }
+
+    .block {
+      position: absolute;
+      left: 14px; right: 14px;
+      border-radius: 10px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+      will-change: transform;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .home-link { z-index: 40; }
+  </style>
+</head>
+<body>
+  <span class="badge">33</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <div id="stage"></div>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    // ── Color definitions (VIBGYOR order = correct) ──
+    var COLORS = [
+      { id: 0, hex: '#7B2FBE' },
+      { id: 1, hex: '#3C0CA8' },
+      { id: 2, hex: '#1252CC' },
+      { id: 3, hex: '#1A8C3E' },
+      { id: 4, hex: '#E8B800' },
+      { id: 5, hex: '#E06000' },
+      { id: 6, hex: '#C41E1E' },
+    ];
+
+    var N        = 7;
+    var HEADER_H = 0;
+    var GAP      = 6;
+    var BLOCK_H, STAGE_H;
+
+    var stage     = document.getElementById('stage');
+    var completed = false;
+    var drag      = null;
+
+    // Current order: order[slot] = colorId
+    var order = [0, 1, 2, 3, 4, 5, 6];
+
+    // Shuffle — ensure it's not already correct
+    do {
+      for (var i = N - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+      }
+    } while (isCorrect());
+
+    // ── Build block elements ──
+    var elems = {}; // colorId → element
+
+    COLORS.forEach(function (c) {
+      var el = document.createElement('div');
+      el.className = 'block';
+      el.style.background = c.hex;
+      stage.appendChild(el);
+      elems[c.id] = el;
+    });
+
+    // ── Layout helpers ──
+    function calcLayout() {
+      STAGE_H  = window.innerHeight - HEADER_H;
+      BLOCK_H  = (STAGE_H - GAP * (N + 1)) / N;
+    }
+
+    function slotY(slot) {
+      return GAP + slot * (BLOCK_H + GAP);
+    }
+
+    function applyPositions(animate) {
+      var tr = animate ? 'transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94)' : 'none';
+      order.forEach(function (colorId, slot) {
+        var el = elems[colorId];
+        el.style.transition = tr;
+        el.style.height      = BLOCK_H + 'px';
+        el.style.transform   = 'translateY(' + slotY(slot) + 'px)';
+      });
+    }
+
+    // ── Win check ──
+    function isCorrect() {
+      return order.every(function (id, slot) { return id === slot; });
+    }
+
+    // ── Touch: start (per block) ──
+    COLORS.forEach(function (c) {
+      elems[c.id].addEventListener('touchstart', function (e) {
+        if (completed) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        var slot      = order.indexOf(c.id);
+        var relTouchY = e.touches[0].clientY - HEADER_H;
+
+        drag = {
+          colorId:     c.id,
+          currentSlot: slot,
+          offsetY:     relTouchY - slotY(slot)
+        };
+
+        var el = elems[c.id];
+        el.style.transition   = 'box-shadow 0.12s ease';
+        el.style.boxShadow    = '0 14px 40px rgba(0,0,0,0.38)';
+        el.style.zIndex       = '50';
+        el.style.borderRadius = '12px';
+      }, { passive: false });
+    });
+
+    // ── Touch: move ──
+    document.addEventListener('touchmove', function (e) {
+      if (!drag || completed) return;
+      e.preventDefault();
+
+      var relTouchY = e.touches[0].clientY - HEADER_H;
+      var newTop    = relTouchY - drag.offsetY;
+
+      // Follow finger
+      elems[drag.colorId].style.transition = 'none';
+      elems[drag.colorId].style.transform  = 'translateY(' + newTop + 'px)';
+
+      // Which slot does this map to?
+      var newSlot = Math.round(newTop / (BLOCK_H + GAP));
+      newSlot = Math.max(0, Math.min(N - 1, newSlot));
+
+      if (newSlot !== drag.currentSlot) {
+        order.splice(drag.currentSlot, 1);
+        order.splice(newSlot, 0, drag.colorId);
+        drag.currentSlot = newSlot;
+
+        order.forEach(function (id, slot) {
+          if (id === drag.colorId) return;
+          elems[id].style.transition = 'transform 0.18s ease';
+          elems[id].style.transform  = 'translateY(' + slotY(slot) + 'px)';
+        });
+      }
+    }, { passive: false });
+
+    // ── Touch: end ──
+    document.addEventListener('touchend', function (e) {
+      if (!drag) return;
+      e.preventDefault();
+
+      var el = elems[drag.colorId];
+      el.style.transition   = 'transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.2s ease';
+      el.style.transform    = 'translateY(' + slotY(drag.currentSlot) + 'px)';
+      el.style.boxShadow    = '0 3px 12px rgba(0,0,0,0.18)';
+      el.style.zIndex       = '';
+      el.style.borderRadius = '';
+      drag = null;
+
+      if (isCorrect()) setTimeout(onComplete, 280);
+    }, { passive: false });
+
+    // ── Win ──
+    function onComplete() {
+      completed = true;
+
+      // Remove gaps — blocks expand to fill screen seamlessly
+      var fullH = STAGE_H / N;
+      COLORS.forEach(function (c) {
+        var slot = order.indexOf(c.id);
+        var el   = elems[c.id];
+        el.style.transition   = 'all 0.55s cubic-bezier(0.4,0,0.2,1)';
+        el.style.height       = fullH + 'px';
+        el.style.transform    = 'translateY(' + (slot * fullH) + 'px)';
+        el.style.left         = '0';
+        el.style.right        = '0';
+        el.style.borderRadius = '0';
+        el.style.boxShadow    = 'none';
+      });
+
+      document.querySelector('.home-link').style.transition = 'opacity 0.4s ease';
+      document.querySelector('.home-link').style.opacity    = '0';
+
+      setTimeout(function () {
+        completeLevel('../solar/', 3);
+      }, 2200);
+    }
+
+    // ── Init ──
+    calcLayout();
+    applyPositions(false);
+    window.addEventListener('resize', function () {
+      calcLayout();
+      if (!completed && !drag) applyPositions(false);
+    });
+  </script>
+</body>
+</html>

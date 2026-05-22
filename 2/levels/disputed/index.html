@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1520; overflow: hidden; }
+    canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+    .clue {
+      position: fixed;
+      top: 3rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Courier New', monospace;
+      font-size: clamp(0.75rem, 3.5vw, 1rem);
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      z-index: 10;
+      pointer-events: none;
+    }
+    #loading {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.1em;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .home-link { z-index: 20; color: rgba(255,255,255,0.2); }
+  </style>
+</head>
+<body>
+  <span class="badge">45</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+  <p class="clue">The most disputed spot in 2026.</p>
+  <p id="loading">loading map…</p>
+  <canvas id="c"></canvas>
+
+  <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var canvas  = document.getElementById('c');
+    var ctx     = canvas.getContext('2d');
+    var loading = document.getElementById('loading');
+    var W, H;
+
+    // ── View ──
+    var scale = 1, offX = 0, offY = 0;
+    var MIN_SCALE, MAX_SCALE;
+
+    // ── Map features (GeoJSON) ──
+    var features = null;
+
+    // ── Hormuz target ──
+    var HZ_LON = 56.5, HZ_LAT = 26.6;
+
+    // ── Touch tracking ──
+    var pointers  = {};   // pointerId → {x,y}
+    var prevDist  = null;
+    var prevMidX  = null, prevMidY = null;
+
+    // ── Circle gesture ──
+    var drawing   = false;
+    var circlePts = [];
+    var drawColor = 'rgba(255,255,255,0.75)';
+    var drawDone  = false;   // gesture evaluated
+    var solved    = false;
+
+    // ── Resize ──
+    // scale = pixels per degree (equirectangular)
+    // Full map: 360° wide × 180° tall
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      // Fit entire world to screen width; centre vertically
+      scale = W / 360;
+      offX  = 0;
+      offY  = (H - 180 * scale) / 2;
+      MIN_SCALE = scale;
+      MAX_SCALE = scale * 400;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ── Load real world map ──
+    fetch('https://unpkg.com/world-atlas@2/countries-50m.json')
+      .then(function(r) { return r.json(); })
+      .then(function(world) {
+        features = topojson.feature(world, world.objects.countries).features;
+        loading.style.display = 'none';
+      })
+      .catch(function() {
+        loading.textContent = 'map load failed — check connection';
+      });
+
+    // ── Equirectangular projection (scale = px per degree) ──
+    function lonLatToScreen(lon, lat) {
+      return {
+        x: (lon + 180) * scale + offX,
+        y: (90 - lat)  * scale + offY
+      };
+    }
+    function screenToLonLat(sx, sy) {
+      return {
+        lon: (sx - offX) / scale - 180,
+        lat: 90 - (sy - offY) / scale
+      };
+    }
+
+    // ── Draw a GeoJSON geometry ring set onto ctx ──
+    function traceRings(rings) {
+      for (var r = 0; r < rings.length; r++) {
+        var ring = rings[r];
+        for (var i = 0; i < ring.length; i++) {
+          var s = lonLatToScreen(ring[i][0], ring[i][1]);
+          if (i === 0) ctx.moveTo(s.x, s.y);
+          else         ctx.lineTo(s.x, s.y);
+        }
+        ctx.closePath();
+      }
+    }
+
+    // ── Touch handlers ──
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        pointers[t.identifier] = { x: t.clientX, y: t.clientY };
+      }
+      var n = e.touches.length;
+      if (n === 1 && !solved) {
+        drawing   = true;
+        drawDone  = false;
+        drawColor = 'rgba(255,255,255,0.75)';
+        circlePts = [{ x: e.touches[0].clientX, y: e.touches[0].clientY }];
+      }
+      if (n === 2) {
+        drawing   = false;
+        circlePts = [];
+        prevDist  = null;
+        prevMidX  = null; prevMidY = null;
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      var n = e.touches.length;
+
+      if (n === 2) {
+        drawing = false;
+        var t0 = e.touches[0], t1 = e.touches[1];
+        var dx   = t1.clientX - t0.clientX;
+        var dy   = t1.clientY - t0.clientY;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        var midX = (t0.clientX + t1.clientX) / 2;
+        var midY = (t0.clientY + t1.clientY) / 2;
+
+        if (prevDist !== null) {
+          var ratio    = dist / prevDist;
+          var newScale = Math.max(MIN_SCALE, Math.min(scale * ratio, MAX_SCALE));
+          var sr       = newScale / scale;
+          offX  = midX - sr * (midX - offX) + (midX - prevMidX);
+          offY  = midY - sr * (midY - offY) + (midY - prevMidY);
+          scale = newScale;
+        }
+        prevDist = dist; prevMidX = midX; prevMidY = midY;
+
+      } else if (n === 1 && drawing) {
+        circlePts.push({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        delete pointers[e.changedTouches[i].identifier];
+      }
+      prevDist = null; prevMidX = null; prevMidY = null;
+
+      if (drawing && circlePts.length > 15 && !solved) {
+        drawing  = false;
+        drawDone = true;
+        evaluateCircle();
+      } else {
+        drawing = false;
+      }
+    }, { passive: false });
+
+    // ── Evaluate circle gesture ──
+    function evaluateCircle() {
+      var pts = circlePts;
+      if (pts.length < 12) return;
+
+      // Bounding box
+      var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (var i = 0; i < pts.length; i++) {
+        minX = Math.min(minX, pts[i].x); maxX = Math.max(maxX, pts[i].x);
+        minY = Math.min(minY, pts[i].y); maxY = Math.max(maxY, pts[i].y);
+      }
+      var cx  = (minX + maxX) / 2;
+      var cy  = (minY + maxY) / 2;
+      var rX  = (maxX - minX) / 2;
+      var rY  = (maxY - minY) / 2;
+      var avg = (rX + rY) / 2;
+
+      // Too small
+      if (avg < 18) { fail(); return; }
+
+      // Circularity: how close are points to avg radius
+      var dev = 0;
+      for (var i = 0; i < pts.length; i++) {
+        var dx = pts[i].x - cx, dy = pts[i].y - cy;
+        dev += Math.abs(Math.sqrt(dx*dx + dy*dy) - avg);
+      }
+      var circularity = 1 - (dev / pts.length) / avg;
+
+      // Closed loop: start and end close
+      var first = pts[0], last = pts[pts.length - 1];
+      var closeD = Math.sqrt(Math.pow(first.x-last.x,2)+Math.pow(first.y-last.y,2));
+      var closed = closeD < avg * 1.5;
+
+      // Convert screen center to lon/lat
+      var ll   = screenToLonLat(cx, cy);
+      var dLon = ll.lon - HZ_LON;
+      var dLat = ll.lat - HZ_LAT;
+      var dist = Math.sqrt(dLon*dLon + dLat*dLat);
+
+      // Zoom requirement: scale (px/degree) must be at least 8× initial
+      var zoomOK = scale > MIN_SCALE * 8;
+
+      if (circularity > 0.5 && closed && dist < 2 && zoomOK) {
+        win();
+      } else {
+        fail();
+      }
+    }
+
+    function win() {
+      solved    = true;
+      drawColor = 'rgba(90,220,120,0.9)';
+      vibrate([30, 40, 30]);
+
+      // Show label after a beat, then fade to white after 3s
+      setTimeout(function() {
+        var label = document.createElement('div');
+        label.textContent = 'Strait of Hormuz';
+        label.style.cssText =
+          'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);' +
+          'font-family:"Courier New",monospace;font-size:clamp(1rem,5vw,1.4rem);' +
+          'letter-spacing:0.12em;color:rgba(90,220,120,0);' +
+          'transition:color 0.6s ease;pointer-events:none;z-index:50;' +
+          'white-space:nowrap;text-align:center;';
+        document.body.appendChild(label);
+        requestAnimationFrame(function() {
+          label.style.color = 'rgba(90,220,120,0.95)';
+        });
+
+        setTimeout(function() {
+          completeLevel('../mines/', 15);
+        }, 3000);
+      }, 400);
+    }
+
+    function fail() {
+      drawColor = 'rgba(220,70,50,0.75)';
+      setTimeout(function() {
+        if (!solved) { circlePts = []; drawDone = false; }
+      }, 700);
+    }
+
+    // ── Render loop ──
+    function draw() {
+      requestAnimationFrame(draw);
+
+      // Ocean
+      ctx.fillStyle = '#0d1520';
+      ctx.fillRect(0, 0, W, H);
+
+      if (!features) return;
+
+      // Countries
+      ctx.fillStyle   = '#2c3e2c';
+      ctx.strokeStyle = '#3a5038';
+      ctx.lineWidth   = Math.max(0.3, scale / 40);
+
+      for (var f = 0; f < features.length; f++) {
+        var geom = features[f].geometry;
+        if (!geom) continue;
+        ctx.beginPath();
+        if (geom.type === 'Polygon') {
+          traceRings(geom.coordinates);
+        } else if (geom.type === 'MultiPolygon') {
+          for (var p = 0; p < geom.coordinates.length; p++) {
+            traceRings(geom.coordinates[p]);
+          }
+        }
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // User's circle drawing — kept as drawn
+      if (circlePts.length > 1) {
+        ctx.strokeStyle = drawColor;
+        ctx.lineWidth   = 2.5;
+        ctx.lineCap     = 'round';
+        ctx.lineJoin    = 'round';
+        ctx.beginPath();
+        ctx.moveTo(circlePts[0].x, circlePts[0].y);
+        for (var i = 1; i < circlePts.length; i++) {
+          ctx.lineTo(circlePts[i].x, circlePts[i].y);
+        }
+        ctx.stroke();
+      }
+    }
+    draw();
+  </script>
+</body>
+</html>

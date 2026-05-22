@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    :root { --level-accent: #7ec8a4; }
+
+    .riddle {
+      text-align: center;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+      line-height: 2.4;
+      max-width: 300px;
+    }
+    .riddle p {
+      margin: 0;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      color: var(--text);
+    }
+    .riddle p.visible { opacity: 1; }
+    .riddle em {
+      font-style: normal;
+      color: var(--level-accent);
+    }
+
+    #landscapeScreen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #landscapeScreen.hidden { display: none; }
+
+    #bigN {
+      position: absolute;
+      font-size: 28vw;
+      color: var(--level-accent);
+      font-family: var(--font);
+      font-weight: normal;
+      line-height: 1;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      user-select: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #completionText {
+      position: absolute;
+      text-align: center;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+      line-height: 2.2;
+      color: var(--text);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      padding: 0 2rem;
+      pointer-events: none;
+      max-width: 92vw;
+    }
+
+    .n-slot {
+      display: inline-block;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">31</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <!-- Portrait -->
+  <div class="page" id="portraitPage">
+    <div class="riddle">
+      <p id="l1">I am in the <em>OCEAN</em></p>
+      <p id="l2">but not in the <em>SEA</em>.</p>
+      <p id="l3">I am in the <em>HORIZON</em></p>
+      <p id="l4">but not in the <em>SKY</em>.</p>
+      <p id="l5">I am in the <em>RAIN</em></p>
+      <p id="l6">but not in the <em>STORM</em>.</p>
+      <p id="l7">I am in every <em>LANDSCAPE</em></p>
+      <p id="l8">but not in every <em>VIEW</em>.</p>
+    </div>
+  </div>
+
+  <!-- Landscape -->
+  <div id="landscapeScreen" class="hidden">
+    <div id="bigN">N</div>
+    <div id="completionText">
+      <p>Welcome to the <span class="n-slot" id="nSlot1"></span>ext phase of Decipher.</p>
+    </div>
+  </div>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+    trackProgress(1);
+
+    var landscapeScreen = document.getElementById('landscapeScreen');
+    var bigN            = document.getElementById('bigN');
+    var completionText  = document.getElementById('completionText');
+    var nSlot           = document.getElementById('nSlot1');
+
+    var isLandscape      = false;
+    var landscapeStarted = false;
+    var completed        = false;
+
+    // ── Riddle ──
+    (function () {
+      var lines = ['l1','l2','l3','l4','l5','l6','l7','l8'];
+      var i = 0;
+      function next() {
+        if (i >= lines.length) return;
+        document.getElementById(lines[i]).classList.add('visible');
+        i++;
+        setTimeout(next, 480);
+      }
+      next();
+    })();
+
+    // ── Orientation ──
+    function checkOrientation() {
+      var nowL = window.innerWidth > window.innerHeight;
+      if (nowL === isLandscape) return;
+      isLandscape = nowL;
+      if (isLandscape && !completed) {
+        landscapeScreen.classList.remove('hidden');
+        if (!landscapeStarted) { landscapeStarted = true; startSequence(); }
+      } else {
+        landscapeScreen.classList.add('hidden');
+      }
+    }
+    window.addEventListener('resize', checkOrientation);
+    checkOrientation();
+
+    // ── Landscape sequence: N fades in, waits to be tapped ──
+    function startSequence() {
+      setTimeout(function () { bigN.style.opacity = '1'; }, 80);
+    }
+
+    // ── Tap the N ──
+    bigN.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      onTapN();
+    }, { passive: false });
+
+    function onTapN() {
+      if (completed) return;
+      completed = true;
+
+      // Capture bigN's current screen centre before anything moves
+      var nRect = bigN.getBoundingClientRect();
+      var nCX   = nRect.left + nRect.width  / 2;
+      var nCY   = nRect.top  + nRect.height / 2;
+
+      // Use fontSize as the target height — slotRect.height is 0 (empty span)
+      var fontSize = parseFloat(window.getComputedStyle(completionText).fontSize) || 16;
+      var targetH  = fontSize * 1.1;
+      var scale    = targetH / nRect.height;
+
+      // Reserve slot width so the word "Next" lays out with a gap
+      nSlot.style.width = Math.round(nRect.width * scale) + 'px';
+
+      // Fade in completion text
+      completionText.style.opacity = '1';
+
+      // Wait for layout to settle, then get the slot's actual position
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          var slotRect = nSlot.getBoundingClientRect();
+          var slotCX   = slotRect.left + slotRect.width  / 2;
+          var slotCY   = slotRect.top  + slotRect.height / 2;
+
+          // Pin bigN at its current centre, lock colour, lift above text
+          bigN.style.cssText = [
+            'position:fixed',
+            'left:'             + nCX + 'px',
+            'top:'              + nCY + 'px',
+            'font-size:28vw',
+            'color:#7ec8a4',
+            'font-family:var(--font)',
+            'font-weight:bold',
+            'line-height:1',
+            'opacity:1',
+            'margin:0',
+            'transform-origin:center center',
+            'transform:translate(-50%,-50%) scale(1)',
+            'pointer-events:none',
+            'user-select:none',
+            'z-index:70'
+          ].join(';');
+
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              bigN.style.transition = 'transform 0.8s cubic-bezier(0.4,0,0.2,1)';
+              var dx = slotCX - nCX;
+              var dy = slotCY - nCY;
+              bigN.style.transform =
+                'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) scale(' + scale + ')';
+            });
+          });
+        });
+      });
+
+      setTimeout(function () { completeLevel('../key/', 1); }, 5000);
+    }
+  </script>
+</body>
+</html>

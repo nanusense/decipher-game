@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f0eeeb;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 3.5rem 12px 1rem;
+    }
+
+    #board {
+      width: min(calc(100vw - 24px), 380px);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Solved group bars */
+    .group-bar {
+      border-radius: 8px;
+      height: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      animation: popIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .group-bar .cat-name {
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      color: #111;
+      text-transform: uppercase;
+    }
+
+    .group-bar .cat-words {
+      font-family: 'Courier New', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.06em;
+      color: #111;
+      text-transform: uppercase;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.88); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    /* Tile grid */
+    .tile-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .tile {
+      background: #ffffff;
+      border-radius: 8px;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Courier New', monospace;
+      font-size: clamp(0.55rem, 3.2vw, 0.76rem);
+      font-weight: bold;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      text-align: center;
+      color: #111;
+      padding: 4px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition: background 0.12s, color 0.12s, transform 0.12s;
+    }
+
+    .tile.selected {
+      background: #5a5248;
+      color: #f0eeeb;
+      transform: scale(0.95);
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      15%      { transform: translateX(-9px); }
+      30%      { transform: translateX(9px); }
+      45%      { transform: translateX(-6px); }
+      60%      { transform: translateX(6px); }
+      75%      { transform: translateX(-3px); }
+      90%      { transform: translateX(3px); }
+    }
+
+    .tile.shake { animation: shake 0.45s ease; }
+
+    /* Submit + feedback */
+    #submit {
+      background: #111;
+      color: #f0eeeb;
+      border: none;
+      border-radius: 24px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      letter-spacing: 0.15em;
+      padding: 12px 44px;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #submit.visible { opacity: 1; pointer-events: auto; }
+
+    #feedback {
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: #888;
+      height: 18px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">49</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <div id="board"></div>
+  <button id="submit">SUBMIT</button>
+  <p id="feedback"></p>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var GROUPS = [
+      { label: 'WEB BROWSERS',          color: '#e8c84e', words: ['CHROME', 'SAFARI', 'FIREFOX', 'EDGE']     },
+      { label: 'SNAKES',                color: '#78c87a', words: ['COBRA',  'VIPER',  'BOA',     'ANACONDA'] },
+      { label: 'PROGRAMMING LANGUAGES', color: '#6a9fd8', words: ['JAVA',   'SWIFT',  'RUBY',    'PYTHON']   },
+      { label: 'BLACK ___',             color: '#b87ed8', words: ['MAMBA',  'BERRY',  'BIRD',    'SMITH']    },
+    ];
+
+    // Flatten + shuffle
+    var allWords = [];
+    GROUPS.forEach(function(g) { allWords = allWords.concat(g.words); });
+    for (var i = allWords.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = allWords[i]; allWords[i] = allWords[j]; allWords[j] = t;
+    }
+
+    var selected   = [];
+    var solvedWords = [];
+    var solvedGrps  = [];
+    var mistakes   = 0;
+
+    var board     = document.getElementById('board');
+    var submitBtn = document.getElementById('submit');
+    var feedback  = document.getElementById('feedback');
+
+    // ── Render ──
+    function render() {
+      board.innerHTML = '';
+
+      // Solved bars
+      solvedGrps.forEach(function(g) {
+        var bar = document.createElement('div');
+        bar.className = 'group-bar';
+        bar.style.background = g.color;
+        bar.innerHTML =
+          '<span class="cat-name">'  + g.label + '</span>' +
+          '<span class="cat-words">' + g.words.join(' · ') + '</span>';
+        board.appendChild(bar);
+      });
+
+      // Remaining tiles
+      var remaining = allWords.filter(function(w) {
+        return solvedWords.indexOf(w) === -1;
+      });
+      if (!remaining.length) return;
+
+      var grid = document.createElement('div');
+      grid.className = 'tile-grid';
+
+      remaining.forEach(function(word) {
+        var tile = document.createElement('div');
+        tile.className = 'tile' + (selected.indexOf(word) !== -1 ? ' selected' : '');
+        tile.textContent = word;
+
+        tile.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          toggle(word);
+        }, { passive: false });
+
+        grid.appendChild(tile);
+      });
+
+      board.appendChild(grid);
+      submitBtn.classList.toggle('visible', selected.length === 4);
+    }
+
+    // ── Toggle selection ──
+    function toggle(word) {
+      var idx = selected.indexOf(word);
+      if (idx !== -1) {
+        selected.splice(idx, 1);
+      } else {
+        if (selected.length >= 4) return;
+        selected.push(word);
+      }
+      render();
+    }
+
+    // ── Submit ──
+    submitBtn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      check();
+    }, { passive: false });
+    submitBtn.addEventListener('click', check);
+
+    function check() {
+      if (selected.length !== 4) return;
+
+      var matched = null;
+      for (var i = 0; i < GROUPS.length; i++) {
+        var g = GROUPS[i];
+        if (solvedGrps.indexOf(g) !== -1) continue;
+        if (selected.every(function(w) { return g.words.indexOf(w) !== -1; })) {
+          matched = g; break;
+        }
+      }
+
+      if (matched) {
+        vibrate([20, 30, 20]);
+        solvedGrps.push(matched);
+        solvedWords = solvedWords.concat(matched.words);
+        selected = [];
+        feedback.textContent = '';
+        render();
+
+        if (solvedWords.length === 16) {
+          setTimeout(function() { completeLevel('../hold/', 19); }, 5000);
+        }
+
+      } else {
+        mistakes++;
+        var oneAway = checkOneAway();
+
+        // Shake selected tiles
+        document.querySelectorAll('.tile.selected').forEach(function(t) {
+          t.classList.remove('shake');
+          void t.offsetWidth;
+          t.classList.add('shake');
+        });
+
+        feedback.textContent = oneAway ? 'one away…' : mistakeLabel(mistakes);
+
+        setTimeout(function() { selected = []; render(); }, 460);
+      }
+    }
+
+    function mistakeLabel(n) {
+      var labels = [
+        '',
+        '1 mistake',
+        '2 errors',
+        '3 wrong turns',
+        '4 terrible choices',
+        '5 questionable decisions',
+        '6 acts of chaos',
+        '7 signs of panic',
+        '8 shots in the dark',
+        '9 lives wasted',
+        '10 reasons to google it',
+        '11 and counting',
+        '12 is not a good number',
+        'unlucky 13',
+        '14 and no shame',
+        '15 — are you even trying?',
+        '16 — at this point, just guess',
+      ];
+      if (n < labels.length) return labels[n];
+      return n + ' 😮';
+    }
+
+    function checkOneAway() {
+      for (var i = 0; i < GROUPS.length; i++) {
+        var g = GROUPS[i];
+        if (solvedGrps.indexOf(g) !== -1) continue;
+        var hits = selected.filter(function(w) { return g.words.indexOf(w) !== -1; });
+        if (hits.length === 3) return true;
+      }
+      return false;
+    }
+
+    render();
+  </script>
+</body>
+</html>

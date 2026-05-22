@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #000;
+      min-height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 52px;
+    }
+
+    .home-link { color: rgba(0,180,0,0.2); z-index: 10; }
+
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: block;
+    }
+
+    #input-wrap {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #answer {
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid rgba(0,200,0,0.3);
+      font-family: 'Courier New', monospace;
+      font-size: 1.6rem;
+      font-weight: bold;
+      letter-spacing: 0.5em;
+      text-align: center;
+      width: 140px;
+      color: #00c800;
+      outline: none;
+      padding: 0.3rem 0;
+      caret-color: #00c800;
+      text-transform: uppercase;
+      -webkit-user-select: auto;
+      user-select: auto;
+    }
+
+    #answer::placeholder {
+      color: rgba(0,180,0,0.2);
+      letter-spacing: 0.3em;
+      font-size: 1rem;
+    }
+
+    #feedback {
+      position: fixed;
+      bottom: 14px;
+      left: 0; right: 0;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      color: rgba(0,180,0,0.35);
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">47</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+  <canvas id="c"></canvas>
+
+  <div id="input-wrap">
+    <input id="answer" type="text" maxlength="3"
+           autocomplete="off" autocorrect="off"
+           autocapitalize="characters" spellcheck="false"
+           placeholder="···">
+  </div>
+  <div id="feedback">what do you see?</div>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var canvas  = document.getElementById('c');
+    var ctx     = canvas.getContext('2d');
+    var input   = document.getElementById('answer');
+    var feedbackEl = document.getElementById('feedback');
+    var W, H, COLS, fontSize, colW;
+    var solved = false;
+
+    var TARGET = 'NEO';
+
+    // Each column: { y: current y position, speed, chars[] }
+    var cols = [];
+
+    // Which column indices carry N, E, O (assigned on resize)
+    var highlightCols = {};   // colIndex → letter
+
+    var CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+    function randChar() {
+      return CHARSET[Math.floor(Math.random() * CHARSET.length)];
+    }
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+
+      fontSize = 15;
+      colW     = fontSize + 2;
+      COLS     = Math.floor(W / colW);
+
+      cols = [];
+      for (var i = 0; i < COLS; i++) {
+        cols.push({
+          y:     Math.random() * -H,
+          speed: 1.2 + Math.random() * 1.6,
+          chars: []
+        });
+      }
+
+      assignHighlightCols();
+
+      // Slightly slower highlight columns, start near the top
+      Object.keys(highlightCols).forEach(function(colIdx) {
+        cols[colIdx].speed = 0.65 + Math.random() * 0.35;
+        cols[colIdx].y     = fontSize * (2 + Math.random() * 4);
+      });
+    }
+
+    function assignHighlightCols() {
+      // Pick 3 columns spread reasonably across the screen for N, E, O
+      // Avoid edges and keep them somewhat spread
+      var third = Math.floor(COLS / 3);
+      var offsets = [
+        Math.floor(third * 0.9  + Math.random() * third * 0.3),
+        Math.floor(third * 1.6  + Math.random() * third * 0.3),
+        Math.floor(third * 2.4  + Math.random() * third * 0.3),
+      ];
+      highlightCols = {};
+      var letters = TARGET.split('');
+      offsets.forEach(function(colIdx, i) {
+        colIdx = Math.max(1, Math.min(COLS - 2, colIdx));
+        highlightCols[colIdx] = letters[i];
+      });
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ── Render loop ──
+    function draw() {
+      requestAnimationFrame(draw);
+      if (solved) return;
+
+      // Semi-transparent black fade (creates trail effect)
+      ctx.fillStyle = 'rgba(0,0,0,0.05)';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.font = 'bold ' + fontSize + 'px "Courier New", monospace';
+      ctx.textAlign = 'center';
+
+      for (var i = 0; i < cols.length; i++) {
+        var col = cols[i];
+        col.y += col.speed;
+
+        var trailLen     = 20;
+        var isHighlight  = highlightCols.hasOwnProperty(i);
+        var targetLetter = isHighlight ? highlightCols[i] : null;
+
+        for (var t = 0; t < trailLen; t++) {
+          var charY = col.y - t * (fontSize + 2);
+          if (charY < -fontSize || charY > H + fontSize) continue;
+
+          var x  = i * colW + colW / 2;
+          var ch;
+
+          if (isHighlight) {
+            // Target letter appears ~85% of the time in highlight columns
+            ch = (Math.random() < 0.85) ? targetLetter : randChar();
+
+            if (t === 0) {
+              ctx.fillStyle = 'rgba(220,255,220,1)';
+            } else if (t <= 3) {
+              ctx.fillStyle = 'rgba(120,255,120,' + (1 - t * 0.15) + ')';
+            } else {
+              var a = Math.max(0, 0.85 - t * 0.035);
+              ctx.fillStyle = 'rgba(40,220,80,' + a + ')';
+            }
+          } else {
+            // Normal column — dimmer
+            ch = randChar();
+            if (t === 0) {
+              ctx.fillStyle = 'rgba(140,255,140,0.75)';
+            } else {
+              var a = Math.max(0, 0.38 - t * 0.022);
+              ctx.fillStyle = 'rgba(0,140,0,' + a + ')';
+            }
+          }
+
+          ctx.fillText(ch, x, charY);
+        }
+
+        // Reset column when it scrolls off bottom
+        if (col.y - trailLen * (fontSize + 2) > H) {
+          col.y     = -fontSize * (2 + Math.random() * 6);
+          col.speed = isHighlight
+            ? 0.65 + Math.random() * 0.35
+            : 1.2  + Math.random() * 1.6;
+        }
+      }
+    }
+    draw();
+
+    // ── Answer ──
+    input.addEventListener('input', function() {
+      if (solved) return;
+      var val = this.value.toUpperCase().replace(/[^A-Z]/g, '');
+      this.value = val;
+      if (val === TARGET) {
+        solved = true;
+        feedbackEl.textContent = '';
+        input.disabled = true;
+
+        setTimeout(function() {
+          completeLevel('../frequency/', 17);
+        }, 3000);
+      }
+    });
+
+    // Auto-focus input on tap anywhere
+    canvas.addEventListener('touchend', function() {
+      if (!solved) input.focus();
+    }, { passive: true });
+  </script>
+</body>
+</html>

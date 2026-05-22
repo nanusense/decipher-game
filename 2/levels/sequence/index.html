@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    :root { --level-accent: #111; }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      overflow: hidden;
+    }
+
+    .letters {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.6rem, 3.5vw, 1.1rem);
+    }
+
+    .letter {
+      font-family: 'Courier New', monospace;
+      font-size: clamp(1.6rem, 8.5vw, 2.6rem);
+      font-weight: bold;
+      color: #111;
+      transition: color 0.3s ease;
+      display: inline-block;
+    }
+
+    .answer-wrap {
+      margin-top: clamp(3rem, 10vh, 5rem);
+    }
+
+    #answer {
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid #ccc;
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      letter-spacing: 0.25em;
+      text-align: center;
+      width: 160px;
+      color: #111;
+      outline: none;
+      padding: 0.3rem 0;
+      caret-color: #111;
+      text-transform: uppercase;
+      -webkit-user-select: auto;
+      user-select: auto;
+    }
+
+    #answer::placeholder {
+      color: #ccc;
+      letter-spacing: 0.1em;
+    }
+
+    #answer.correct {
+      color: #3a8fc7;
+      border-color: #3a8fc7;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">43</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <div class="letters" id="letters"></div>
+
+  <div class="answer-wrap">
+    <input id="answer" type="text" autocomplete="off" autocorrect="off"
+           autocapitalize="none" spellcheck="false" placeholder="···">
+  </div>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    // Build individual letter spans so we can animate them
+    var LETTERS  = ['H','I','J','K','L','M','N','O'];
+    var lettersEl = document.getElementById('letters');
+    var spans     = [];
+
+    LETTERS.forEach(function(ch) {
+      var s = document.createElement('span');
+      s.className   = 'letter';
+      s.textContent = ch;
+      lettersEl.appendChild(s);
+      spans.push(s);
+    });
+
+    // Answer input
+    var input     = document.getElementById('answer');
+    var solved    = false;
+
+    input.addEventListener('input', function() {
+      if (solved) return;
+      var val = this.value.trim().toLowerCase();
+      if (val === 'water') {
+        solved = true;
+        this.classList.add('correct');
+        this.disabled = true;
+
+        // Ripple each letter to blue, left to right
+        spans.forEach(function(s, i) {
+          setTimeout(function() {
+            s.style.color = '#3a8fc7';
+          }, i * 60);
+        });
+
+        // White fade after letters finish
+        setTimeout(function() { completeLevel('../forward/', 13); }, spans.length * 60 + 700);
+      }
+    });
+
+    // Focus input on tap anywhere
+    document.addEventListener('touchend', function() {
+      if (!solved) input.focus();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    :root { --level-accent: #ef4444; }
+
+    body {
+      overflow: hidden;
+      padding: 0;
+      justify-content: flex-start;
+    }
+
+    /* Scanning line */
+    #scanLine {
+      position: fixed;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #ef4444;
+      box-shadow: 0 0 8px 2px rgba(239,68,68,0.5);
+      animation: scan 2.4s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    @keyframes scan {
+      0%   { top: 10%; }
+      50%  { top: 88%; }
+      100% { top: 10%; }
+    }
+
+    /* Scanner circle at touch point */
+    #scanner {
+      position: fixed;
+      width: 120px;
+      height: 120px;
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      transform: translate(-50%, -50%);
+    }
+    #scanner.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+  <span class="badge">32</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <div id="scanLine"></div>
+  <canvas id="scanner"></canvas>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+    trackProgress(2);
+
+    var DURATION   = 3000;
+    var START_DELAY = 400;   // ms before scanner appears
+    var SIZE       = 120;
+    var completed  = false;
+    var pressing   = false;
+    var startTime  = null;
+    var animFrame  = null;
+    var delayTimer = null;
+
+    var scanner = document.getElementById('scanner');
+    var ctx     = scanner.getContext('2d');
+    scanner.width  = SIZE;
+    scanner.height = SIZE;
+
+    // ── Touch ──
+    document.addEventListener('touchstart', function (e) {
+      if (completed) return;
+      e.preventDefault();
+      var t = e.touches[0];
+      beginPress(t.clientX, t.clientY);
+    }, { passive: false });
+
+    document.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      if (!completed) cancelPress();
+    }, { passive: false });
+
+    document.addEventListener('touchcancel', function () {
+      if (!completed) cancelPress();
+    });
+
+    function beginPress(x, y) {
+      cancelPress();
+      pressing = true;
+      delayTimer = setTimeout(function () {
+        if (!pressing) return;
+        startTime = Date.now();
+        scanner.style.left = x + 'px';
+        scanner.style.top  = y + 'px';
+        scanner.classList.add('visible');
+        animFrame = requestAnimationFrame(drawFrame);
+      }, START_DELAY);
+    }
+
+    function drawFrame() {
+      if (!pressing) return;
+      var elapsed  = Date.now() - startTime;
+      var progress = Math.min(elapsed / DURATION, 1);
+      var cx = SIZE / 2, cy = SIZE / 2;
+      var trackR = SIZE / 2 - 6;
+      var done   = progress >= 1;
+      var color  = done ? '#7ec8a4' : '#ef4444';
+
+      ctx.clearRect(0, 0, SIZE, SIZE);
+
+      // Background track
+      ctx.beginPath();
+      ctx.arc(cx, cy, trackR, 0, Math.PI * 2);
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth   = 2.5;
+      ctx.stroke();
+
+      // Inner rings
+      [10, 20, 30, 40].forEach(function (r) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = 0.25 + progress * 0.45;
+        ctx.lineWidth   = 1.2;
+        ctx.stroke();
+      });
+      ctx.globalAlpha = 1;
+
+      // Progress arc
+      ctx.beginPath();
+      ctx.arc(cx, cy, trackR, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 2.5;
+      ctx.lineCap     = 'round';
+      ctx.stroke();
+
+      if (done) {
+        onUnlocked();
+      } else {
+        animFrame = requestAnimationFrame(drawFrame);
+      }
+    }
+
+    function cancelPress() {
+      pressing = false;
+      if (delayTimer) { clearTimeout(delayTimer); delayTimer = null; }
+      if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+      scanner.classList.remove('visible');
+      ctx.clearRect(0, 0, SIZE, SIZE);
+      startTime = null;
+    }
+
+    function onUnlocked() {
+      completed = true;
+      setTimeout(function () {
+        completeLevel('../palette/', 2);
+      }, 600);
+    }
+  </script>
+</body>
+</html>

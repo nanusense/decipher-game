@@ -1,0 +1,270 @@
+:root {
+  --bg: #ffffff;
+  --text: #111111;
+  --muted: #9ca3af;
+  --border: #e5e7eb;
+  --surface: #f9fafb;
+  --font: 'Courier New', Courier, monospace;
+  --level-accent: #111111;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.hidden  { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+.page {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  animation: fadeUp 0.5s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Fixed chrome ── */
+.badge {
+  position: fixed;
+  top: 1.25rem;
+  left: 1.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  z-index: 10;
+}
+
+.home-link {
+  position: fixed;
+  top: 1.2rem;
+  right: 1.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  text-decoration: none;
+  z-index: 10;
+}
+.home-link:active { color: var(--text); }
+
+/* ── Typography ── */
+h1.title {
+  font-size: clamp(1.25rem, 5vw, 2rem);
+  font-weight: normal;
+  letter-spacing: 0.12em;
+  text-align: center;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.clue {
+  font-size: clamp(0.85rem, 3vw, 0.95rem);
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 0.05em;
+  line-height: 2;
+  max-width: 320px;
+}
+
+.line {
+  width: 40px;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Buttons ── */
+.btn {
+  background: transparent;
+  border: 1px solid var(--text);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.875rem;
+  letter-spacing: 0.15em;
+  padding: 0.8rem 2.2rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
+}
+.btn:active { background: var(--text); color: var(--bg); }
+
+.btn-accent {
+  border-color: var(--level-accent);
+  color: var(--level-accent);
+}
+.btn-accent:active { background: var(--level-accent); color: var(--bg); }
+
+/* ── Answer input ── */
+.answer-wrap { width: 100%; max-width: 120px; text-align: center; }
+.answer-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 2rem;
+  letter-spacing: 0.4em;
+  padding: 0.5rem 0;
+  text-align: center;
+  outline: none;
+  -webkit-appearance: none;
+  transition: border-color 0.2s;
+  text-transform: uppercase;
+  caret-color: var(--level-accent);
+}
+.answer-input:focus { border-color: var(--muted); }
+.answer-input::placeholder { color: var(--border); }
+
+/* ── Landing ── */
+.logo {
+  font-size: clamp(2.5rem, 12vw, 4rem);
+  letter-spacing: 0.3em;
+  font-weight: normal;
+  color: var(--text);
+}
+.tagline {
+  font-size: 0.75rem;
+  letter-spacing: 0.35em;
+  color: var(--muted);
+}
+.btn-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  max-width: 200px;
+}
+
+/* ── Desktop block — intentionally dark regardless of theme ── */
+.desktop-block {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0d0d0d;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  color: #444444;
+  text-align: center;
+  padding: 2rem;
+  line-height: 2;
+}
+.desktop-block.active { display: flex; }
+
+/* ── Permission screen ── */
+.permission-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+  text-align: center;
+}
+
+/* ── Reveal animation ── */
+@keyframes letterFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.reveal-letter {
+  display: inline-block;
+  opacity: 0;
+  animation: letterFade 0.15s forwards;
+}
+
+/* ── Spirit level ── */
+.well {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.crosshair-h,
+.crosshair-v {
+  position: absolute;
+  background: var(--border);
+  pointer-events: none;
+}
+.crosshair-h { width: 100%; height: 1px; }
+.crosshair-v { width: 1px; height: 100%; }
+
+.target-ring {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid #c0c0c0;
+  position: absolute;
+  pointer-events: none;
+  transition: border-color 0.2s;
+  z-index: 1;
+}
+
+.bubble {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--level-accent);
+  position: absolute;
+  transition: transform 0.06s linear;
+  z-index: 2;
+  opacity: 0.85;
+}
+
+.well.centered .bubble { opacity: 1; }
+
+@keyframes ringPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(17,17,17,0.2); }
+  70%  { box-shadow: 0 0 0 10px rgba(17,17,17,0); }
+  100% { box-shadow: 0 0 0 0 rgba(17,17,17,0); }
+}
+.well.centered .target-ring {
+  border-color: var(--level-accent);
+  animation: ringPulse 1s ease-out infinite;
+}
+
+.steady-counter {
+  font-size: 3.5rem;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  min-height: 1.2em;
+  line-height: 1;
+  transition: color 0.3s;
+}
+.steady-counter.active { color: var(--level-accent); }
+
+.instruction {
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+}

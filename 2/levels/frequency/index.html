@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    :root { --level-accent: #c9a96e; }
+
+    .page { gap: 3.5rem; }
+
+    .clue {
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      color: var(--text);
+      text-align: center;
+    }
+
+    /* ── Dial ── */
+    .dial-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.4rem;
+      width: 100%;
+    }
+
+    .freq-display {
+      font-size: 2.8rem;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      transition: color 0.3s ease;
+      min-width: 6ch;
+      text-align: center;
+      line-height: 1;
+    }
+    .freq-display.locked { color: #7ec8a4; }
+
+    /* Dial track */
+    .dial-track {
+      position: relative;
+      width: 280px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      touch-action: none;
+      cursor: ew-resize;
+    }
+
+    .dial-bar {
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .dial-fill {
+      position: absolute;
+      left: 0;
+      height: 1px;
+      background: var(--level-accent);
+      width: 0%;
+      transition: width 0.05s linear;
+    }
+
+    .dial-thumb {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid var(--muted);
+      background: var(--bg);
+      transform: translateX(-50%);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      left: 0%;
+    }
+    .dial-thumb.locked {
+      border-color: #7ec8a4;
+      box-shadow: 0 0 0 4px rgba(126,200,164,0.2);
+    }
+
+    .dial-labels {
+      width: 280px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    .hint-text {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      color: var(--border);
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    .hint-text.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+  <span class="badge">48</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <div class="page">
+    <p class="clue">Concert Pitch</p>
+
+    <div class="dial-wrap">
+      <div class="freq-display" id="freqDisplay">220</div>
+
+      <div class="dial-track" id="dialTrack">
+        <div class="dial-bar"></div>
+        <div class="dial-fill" id="dialFill"></div>
+        <div class="dial-thumb" id="dialThumb"></div>
+      </div>
+
+      <div class="dial-labels">
+        <span>220 Hz</span>
+        <span>660 Hz</span>
+      </div>
+    </div>
+
+    <p class="hint-text" id="hintText">drag to tune</p>
+  </div>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+    trackProgress(17);
+
+    var MIN_HZ   = 220;
+    var MAX_HZ   = 660;
+    var TARGET   = 440;
+
+    var completed = false;
+    var locked    = false;
+    var audioCtx  = null;
+    var osc       = null;
+    var gainNode  = null;
+
+    var track  = document.getElementById('dialTrack');
+    var thumb  = document.getElementById('dialThumb');
+    var fill   = document.getElementById('dialFill');
+    var display = document.getElementById('freqDisplay');
+    var hint   = document.getElementById('hintText');
+
+    var trackRect  = null;
+    var dragging   = false;
+    var currentHz  = MIN_HZ;
+    var lockTimer  = null;
+
+    // Show drag hint after a moment
+    setTimeout(function () { hint.classList.add('visible'); }, 1500);
+
+    // ── Audio ──
+    function startAudio() {
+      if (audioCtx) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return;
+      }
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx.resume();
+
+      gainNode = audioCtx.createGain();
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.connect(audioCtx.destination);
+
+      osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(currentHz, audioCtx.currentTime);
+      osc.connect(gainNode);
+      osc.start();
+    }
+
+    function setFreq(hz) {
+      if (!osc) return;
+      osc.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.04);
+    }
+
+    function fadeIn() {
+      if (!gainNode) return;
+      gainNode.gain.setTargetAtTime(0.18, audioCtx.currentTime, 0.05);
+    }
+
+    function fadeOut() {
+      if (!gainNode) return;
+      gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+    }
+
+    // ── Dial ──
+    function updateDial(pct) {
+      pct = Math.max(0, Math.min(1, pct));
+      var raw = MIN_HZ + pct * (MAX_HZ - MIN_HZ);
+
+      if (Math.abs(raw - TARGET) <= 2) {
+        currentHz = TARGET;
+        pct = (TARGET - MIN_HZ) / (MAX_HZ - MIN_HZ);
+      } else {
+        currentHz = Math.round(raw);
+      }
+
+      thumb.style.left = (pct * 100) + '%';
+      fill.style.width = (pct * 100) + '%';
+      display.textContent = currentHz;
+
+      setFreq(currentHz);
+
+      if (currentHz === TARGET && !locked) {
+        onLock();
+      } else if (currentHz !== TARGET && locked && !completed) {
+        onUnlock();
+      }
+    }
+
+    function onLock() {
+      locked = true;
+      display.classList.add('locked');
+      thumb.classList.add('locked');
+      display.textContent = TARGET;
+      osc.frequency.setTargetAtTime(TARGET, audioCtx.currentTime, 0.02);
+      gainNode.gain.setTargetAtTime(0.25, audioCtx.currentTime, 0.05);
+    }
+
+    function onUnlock() {
+      locked = false;
+      clearTimeout(lockTimer);
+      lockTimer = null;
+      display.classList.remove('locked');
+      thumb.classList.remove('locked');
+    }
+
+    function onComplete() {
+      completed = true;
+      fadeOut();
+      setTimeout(function () { completeLevel('../connections/', 18); }, 600);
+    }
+
+    // ── Touch drag ──
+    track.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      if (completed) return;
+      dragging   = true;
+      trackRect  = track.getBoundingClientRect();
+      startAudio();
+      fadeIn();
+      hint.classList.remove('visible');
+      var t = e.touches[0];
+      updateDial((t.clientX - trackRect.left) / trackRect.width);
+    }, { passive: false });
+
+    track.addEventListener('touchmove', function (e) {
+      e.preventDefault();
+      if (!dragging || completed) return;
+      var t = e.touches[0];
+      updateDial((t.clientX - trackRect.left) / trackRect.width);
+    }, { passive: false });
+
+    track.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      dragging = false;
+      if (locked && !completed) {
+        lockTimer = setTimeout(function () {
+          if (locked && !completed) onComplete();
+        }, 2000);
+      } else {
+        fadeOut();
+      }
+    }, { passive: false });
+  </script>
+</body>
+</html>

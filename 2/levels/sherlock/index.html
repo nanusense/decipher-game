@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    :root { --level-accent: #c9a96e; }
+
+    .page { gap: 0; justify-content: center; }
+
+    .txt {
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      color: var(--text);
+      text-align: center;
+      line-height: 1;
+    }
+
+    .txt-top {
+      margin-bottom: 2.8rem;
+    }
+
+    .magnifier {
+      margin-bottom: 2.5rem;
+      opacity: 0.35;
+    }
+
+    .word {
+      transition: color 0.4s ease;
+      font-weight: bold;
+    }
+    .word.solved {
+      color: #7ec8a4;
+    }
+
+    .txt-middle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+
+    .emoji-input {
+      width: 2.2rem;
+      height: 2.2rem;
+      border: none;
+      border-bottom: 1.5px solid var(--muted);
+      background: transparent;
+      font-size: 1.3rem;
+      text-align: center;
+      font-family: var(--font);
+      color: var(--text);
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+      padding: 0;
+      line-height: 1;
+      caret-color: var(--muted);
+    }
+
+    .line-bottom {
+      position: fixed;
+      bottom: 3.5rem;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">41</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <div class="page">
+
+    <!-- Magnifying glass -->
+    <svg class="magnifier" width="72" height="72" viewBox="0 0 72 72"
+         fill="none" stroke="#111" stroke-width="2.2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="30" cy="30" r="20"/>
+      <line x1="44" y1="44" x2="64" y2="64"/>
+      <!-- Highlight arc inside lens -->
+      <path d="M 20 22 Q 24 16 32 16" stroke-width="1.5" opacity="0.4"/>
+    </svg>
+
+    <p class="txt txt-top">This is too obvious and iconic.</p>
+    <div class="txt txt-middle">
+      <span id="wordNo" class="word">No</span>
+      <input
+        id="emojiInput"
+        class="emoji-input"
+        type="text"
+        maxlength="2"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      >
+      <span id="wordSherlock" class="word">Sherlock</span>
+    </div>
+
+  </div>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var input       = document.getElementById('emojiInput');
+    var wordNo      = document.getElementById('wordNo');
+    var wordSherlock= document.getElementById('wordSherlock');
+    var completed   = false;
+
+    input.addEventListener('input', function () {
+      if (completed) return;
+
+      // Strip all ASCII characters — only emoji pass through
+      var filtered = this.value.replace(/[\x00-\x7F]/g, '');
+      if (this.value !== filtered) this.value = filtered;
+
+      if (filtered.includes('💩')) {
+        wordNo.classList.add('solved');
+        wordSherlock.classList.add('solved');
+        onComplete();
+      }
+    });
+
+    function onComplete() {
+      if (completed) return;
+      completed = true;
+      input.blur();
+
+      setTimeout(function () {
+        completeLevel('../qr/', 11);
+      }, 2500);
+    }
+  </script>
+</body>
+</html>

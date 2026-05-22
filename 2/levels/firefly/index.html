@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    body {
+      background: #050505;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .badge, .home-link {
+      color: rgba(255,255,255,0.18);
+      z-index: 10;
+    }
+
+    #gameCanvas {
+      position: fixed;
+      inset: 0;
+      touch-action: none;
+    }
+
+    #message {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      letter-spacing: 0.14em;
+      color: #ffffff;
+      text-shadow: 0 0 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.8);
+      z-index: 20;
+      opacity: 0;
+      transition: opacity 0.9s ease;
+      pointer-events: none;
+    }
+    #message.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+  <span class="badge">40</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <canvas id="gameCanvas"></canvas>
+  <div id="message">Three times is the charm.</div>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var canvas = document.getElementById('gameCanvas');
+    var ctx    = canvas.getContext('2d');
+    var msgEl  = document.getElementById('message');
+
+    var CATCH_RADIUS = 45;   // px — how close finger must be to catch
+    var DRIFT_RADIUS = 65;   // px — how far finger can drift before fly escapes
+
+    var completed = false;
+    var allLocked = false;
+    var startTime = Date.now();
+    var ripples   = [];
+
+    var W, H;
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ── Fireflies ──
+    var flies = [];
+
+    function initFlies() {
+      flies = [];
+      var offsets = [
+        { ax: -0.25, ay: -0.18 },
+        { ax:  0.25, ay: -0.18 },
+        { ax:  0,    ay:  0.22 }
+      ];
+      for (var i = 0; i < 3; i++) {
+        flies.push({
+          x:        W / 2 + offsets[i].ax * W,
+          y:        H / 2 + offsets[i].ay * H,
+          vx:       (Math.random() - 0.5) * 1.6,
+          vy:       (Math.random() - 0.5) * 1.6,
+          targetX:  80 + Math.random() * (W - 160),
+          targetY:  80 + Math.random() * (H - 160),
+          held:     false,
+          fingerId: null
+        });
+      }
+    }
+    initFlies();
+
+    function newTarget(fly) {
+      fly.targetX = 80 + Math.random() * (W - 160);
+      fly.targetY = 80 + Math.random() * (H - 160);
+    }
+
+    function updateFly(fly) {
+      if (fly.held || allLocked) return;
+
+      var dx = fly.targetX - fly.x;
+      var dy = fly.targetY - fly.y;
+      if (Math.sqrt(dx * dx + dy * dy) < 30) newTarget(fly);
+
+      fly.vx += dx * 0.0018;
+      fly.vy += dy * 0.0018;
+
+      var spd = Math.sqrt(fly.vx * fly.vx + fly.vy * fly.vy);
+      var max = 1.8;
+      if (spd > max) { fly.vx = fly.vx / spd * max; fly.vy = fly.vy / spd * max; }
+
+      var m = 70;
+      if (fly.x < m)     fly.vx += 0.12;
+      if (fly.x > W - m) fly.vx -= 0.12;
+      if (fly.y < m)     fly.vy += 0.12;
+      if (fly.y > H - m) fly.vy -= 0.12;
+
+      fly.x += fly.vx;
+      fly.y += fly.vy;
+    }
+
+    function drawFly(fly, elapsed) {
+      var x = fly.x, y = fly.y;
+      var pulse = (Math.sin(elapsed / 480 + fly.x * 0.01) + 1) / 2;
+
+      var outerR, g;
+
+      if (allLocked) {
+        outerR = 44;
+        g = ctx.createRadialGradient(x, y, 0, x, y, outerR);
+        g.addColorStop(0,    'rgba(255,255,210,1)');
+        g.addColorStop(0.35, 'rgba(255,220,80,0.75)');
+        g.addColorStop(1,    'rgba(255,180,40,0)');
+      } else if (fly.held) {
+        outerR = 32;
+        g = ctx.createRadialGradient(x, y, 0, x, y, outerR);
+        g.addColorStop(0,   'rgba(255,245,170,0.95)');
+        g.addColorStop(0.4, 'rgba(245,200,66,0.55)');
+        g.addColorStop(1,   'rgba(245,180,40,0)');
+      } else {
+        outerR = 28;
+        g = ctx.createRadialGradient(x, y, 0, x, y, outerR);
+        g.addColorStop(0,   'rgba(255,220,80,'  + (0.7 + pulse * 0.3) + ')');
+        g.addColorStop(0.4, 'rgba(245,180,40,'  + (0.3 + pulse * 0.2) + ')');
+        g.addColorStop(1,   'rgba(245,180,40,0)');
+      }
+
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, outerR, 0, Math.PI * 2);
+      ctx.fill();
+
+      var coreR = allLocked ? 5 : (fly.held ? 4.5 : 3.5);
+      ctx.fillStyle = 'rgba(255,255,225,' + (fly.held || allLocked ? 1 : 0.85 + pulse * 0.15) + ')';
+      ctx.beginPath();
+      ctx.arc(x, y, coreR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // ── Ripples ──
+    function spawnRipples() {
+      for (var i = 0; i < flies.length; i++) {
+        ripples.push({ x: flies[i].x, y: flies[i].y, r: 4, alpha: 0.75 });
+      }
+    }
+
+    function drawRipples() {
+      for (var i = ripples.length - 1; i >= 0; i--) {
+        var rp = ripples[i];
+        rp.r    += 2.8;
+        rp.alpha -= 0.016;
+        if (rp.alpha <= 0) { ripples.splice(i, 1); continue; }
+        ctx.beginPath();
+        ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(245,200,66,' + rp.alpha + ')';
+        ctx.lineWidth   = 1.5;
+        ctx.stroke();
+      }
+    }
+
+    // ── Loop ──
+    function loop() {
+      if (completed) return;
+      ctx.clearRect(0, 0, W, H);
+
+      var elapsed = Date.now() - startTime;
+
+      for (var i = 0; i < flies.length; i++) {
+        updateFly(flies[i]);
+        drawFly(flies[i], elapsed);
+      }
+      drawRipples();
+
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    // ── Touch ──
+    canvas.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      if (completed || allLocked) return;
+
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var touch = e.changedTouches[i];
+        var best = null, bestDist = Infinity;
+        for (var j = 0; j < flies.length; j++) {
+          if (flies[j].held) continue;
+          var dx = touch.clientX - flies[j].x;
+          var dy = touch.clientY - flies[j].y;
+          var d  = Math.sqrt(dx * dx + dy * dy);
+          if (d < CATCH_RADIUS && d < bestDist) { best = flies[j]; bestDist = d; }
+        }
+        if (best) {
+          best.held     = true;
+          best.fingerId = touch.identifier;
+          checkAllCaught();
+        }
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', function (e) {
+      e.preventDefault();
+      if (completed || allLocked) return;
+
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var touch = e.changedTouches[i];
+        for (var j = 0; j < flies.length; j++) {
+          if (flies[j].fingerId !== touch.identifier) continue;
+          var dx = touch.clientX - flies[j].x;
+          var dy = touch.clientY - flies[j].y;
+          if (Math.sqrt(dx * dx + dy * dy) > DRIFT_RADIUS) {
+            flies[j].held     = false;
+            flies[j].fingerId = null;
+          }
+        }
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function (e) {
+      e.preventDefault();
+      if (allLocked) return;
+
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var touch = e.changedTouches[i];
+        for (var j = 0; j < flies.length; j++) {
+          if (flies[j].fingerId === touch.identifier) {
+            flies[j].held     = false;
+            flies[j].fingerId = null;
+          }
+        }
+      }
+    }, { passive: false });
+
+    function checkAllCaught() {
+      for (var i = 0; i < flies.length; i++) {
+        if (!flies[i].held) return;
+      }
+      onAllCaught();
+    }
+
+    function onAllCaught() {
+      allLocked = true;
+      spawnRipples();
+      setTimeout(function () { spawnRipples(); }, 260);
+      setTimeout(function () { spawnRipples(); }, 520);
+
+      setTimeout(function () {
+        msgEl.classList.add('visible');
+        setTimeout(onComplete, 4000);
+      }, 2000);
+    }
+
+    function onComplete() {
+      completed = true;
+      completeLevel('../sherlock/', 10);
+    }
+  </script>
+</body>
+</html>

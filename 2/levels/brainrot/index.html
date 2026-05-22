@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    :root { --level-accent: #111; }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      overflow: hidden;
+      transition: background 0.1s;
+    }
+
+    .clue {
+      font-family: 'Courier New', monospace;
+      font-size: clamp(1rem, 5vw, 1.3rem);
+      color: #111;
+      text-align: center;
+      line-height: 1.7;
+      letter-spacing: 0.04em;
+      max-width: 80vw;
+      transition: color 0.1s;
+    }
+
+    .answer-wrap {
+      margin-top: clamp(2.5rem, 9vh, 4.5rem);
+    }
+
+    #answer {
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid #ccc;
+      font-family: 'Courier New', monospace;
+      font-size: 1.1rem;
+      letter-spacing: 0.3em;
+      text-align: center;
+      width: 120px;
+      color: #111;
+      outline: none;
+      padding: 0.3rem 0;
+      caret-color: #111;
+      -webkit-user-select: auto;
+      user-select: auto;
+    }
+
+    #answer::placeholder {
+      color: #ccc;
+      letter-spacing: 0.1em;
+    }
+
+    @keyframes shake {
+      0%   { transform: translateX(0); }
+      15%  { transform: translateX(-10px) rotate(-1deg); }
+      30%  { transform: translateX(10px) rotate(1deg); }
+      45%  { transform: translateX(-8px) rotate(-0.5deg); }
+      60%  { transform: translateX(8px) rotate(0.5deg); }
+      75%  { transform: translateX(-5px); }
+      90%  { transform: translateX(5px); }
+      100% { transform: translateX(0); }
+    }
+
+    .shaking {
+      animation: shake 0.45s ease;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">35</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <p class="clue" id="clue">Gen Alpha goes crazy<br>(borderline mental)<br>when they hear this.</p>
+
+  <div class="answer-wrap">
+    <input id="answer" type="text" inputmode="numeric" pattern="[0-9]*"
+           autocomplete="off" autocorrect="off" spellcheck="false" placeholder="···">
+  </div>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var input   = document.getElementById('answer');
+    var clueEl  = document.getElementById('clue');
+    var body    = document.body;
+    var solved  = false;
+
+    var COLORS  = [
+      '#ff003c','#ff6f00','#ffe000','#00e676',
+      '#00b0ff','#d500f9','#ff1744','#76ff03'
+    ];
+
+    input.addEventListener('input', function() {
+      if (solved) return;
+      if (this.value.trim() === '67') {
+        solved = true;
+        this.blur();
+        this.disabled = true;
+        chaos();
+      }
+    });
+
+    // Focus on tap anywhere
+    document.addEventListener('touchend', function() {
+      if (!solved) input.focus();
+    });
+
+    function chaos() {
+      var flashes  = 0;
+      var maxFlash = 14;
+      var interval = setInterval(function() {
+        if (flashes >= maxFlash) {
+          clearInterval(interval);
+          finish();
+          return;
+        }
+        var clr = COLORS[flashes % COLORS.length];
+        body.style.background     = clr;
+        clueEl.style.color        = flashes % 2 === 0 ? '#fff' : '#000';
+        input.style.borderColor   = '#fff';
+
+        // shake the clue every other flash
+        if (flashes % 2 === 0) {
+          clueEl.classList.remove('shaking');
+          void clueEl.offsetWidth; // reflow
+          clueEl.classList.add('shaking');
+        }
+
+        vibrate([20]);
+        flashes++;
+      }, 90);
+    }
+
+    function finish() {
+      body.style.background   = '#f0eeeb';
+      clueEl.style.color      = '#111';
+
+      setTimeout(function() {
+        completeLevel('../echo/', 5);
+      }, 400);
+    }
+  </script>
+</body>
+</html>

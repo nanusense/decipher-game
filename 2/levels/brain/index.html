@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f0eeeb;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #clue {
+      font-family: 'Courier New', monospace;
+      font-size: clamp(0.82rem, 3.8vw, 1rem);
+      color: #999;
+      text-align: center;
+      letter-spacing: 0.04em;
+      line-height: 1.6;
+      padding: 0 32px;
+    }
+
+    #zone {
+      position: relative;
+      margin-top: 64px;
+      width: min(calc(100vw - 48px), 320px);
+      height: 48px;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0; left: 0;
+      display: block;
+      touch-action: none;
+    }
+
+    #art     { z-index: 1; }
+    #scratch { z-index: 2; }
+  </style>
+</head>
+<body>
+  <span class="badge">39</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <p id="clue">You don't have to scratch your brain for this.</p>
+
+  <div id="zone">
+    <canvas id="art"></canvas>
+    <canvas id="scratch"></canvas>
+  </div>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var zone   = document.getElementById('zone');
+    var artC   = document.getElementById('art');
+    var scrC   = document.getElementById('scratch');
+    var aC     = artC.getContext('2d');
+    var sC     = scrC.getContext('2d');
+    var solved = false;
+    var SCRATCH_R = 22;
+
+    function setup() {
+      var W = zone.offsetWidth;
+      var H = zone.offsetHeight;
+      artC.width  = scrC.width  = W;
+      artC.height = scrC.height = H;
+
+      // Art layer: "That's it." centred
+      aC.clearRect(0, 0, W, H);
+      aC.font         = 'italic ' + Math.round(H * 0.52) + 'px "Courier New", monospace';
+      aC.textAlign    = 'center';
+      aC.textBaseline = 'middle';
+      aC.fillStyle    = '#555';
+      aC.fillText("That's it.", W / 2, H / 2);
+
+      // Scratch layer: same colour as page — looks like nothing is there
+      sC.globalCompositeOperation = 'source-over';
+      sC.fillStyle = '#f0eeeb';
+      sC.fillRect(0, 0, W, H);
+    }
+
+    window.addEventListener('resize', setup);
+    setup();
+
+    // ── Scratch ──
+    scrC.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    scrC.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (solved) return;
+      for (var i = 0; i < e.touches.length; i++) doScratch(e.touches[i]);
+      checkWin();
+    }, { passive: false });
+
+    scrC.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      checkWin();
+    }, { passive: false });
+
+    function doScratch(touch) {
+      var rect = scrC.getBoundingClientRect();
+      var x = (touch.clientX - rect.left) * (scrC.width  / rect.width);
+      var y = (touch.clientY - rect.top)  * (scrC.height / rect.height);
+      sC.globalCompositeOperation = 'destination-out';
+      sC.beginPath();
+      sC.arc(x, y, SCRATCH_R, 0, Math.PI * 2);
+      sC.fill();
+    }
+
+    function checkWin() {
+      if (solved) return;
+      var W    = scrC.width;
+      var H    = scrC.height;
+      var data = sC.getImageData(0, 0, W, H).data;
+      var total = W * H;
+      var cleared = 0;
+      for (var i = 3; i < data.length; i += 4) {
+        if (data[i] < 128) cleared++;
+      }
+      if (cleared / total > 0.5) win();
+    }
+
+    function win() {
+      solved = true;
+      vibrate([20, 40, 20]);
+
+      // Wipe scratch layer clean so text is fully readable
+      sC.globalCompositeOperation = 'destination-out';
+      sC.fillRect(0, 0, scrC.width, scrC.height);
+
+      setTimeout(function() {
+        completeLevel('../firefly/', 9);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

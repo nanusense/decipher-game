@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f0eeeb;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 3.5rem 24px 2rem;
+    }
+
+    #clue {
+      font-family: 'Courier New', monospace;
+      font-size: clamp(0.85rem, 4vw, 1rem);
+      letter-spacing: 0.06em;
+      color: #888;
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    #qr-wrap {
+      background: #fff;
+      padding: 18px;
+      border-radius: 12px;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.07);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #qr-wrap canvas,
+    #qr-wrap img {
+      display: block;
+      width: min(56vw, 220px) !important;
+      height: min(56vw, 220px) !important;
+    }
+
+    #answer {
+      margin-top: 44px;
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid #ccc;
+      font-family: 'Courier New', monospace;
+      font-size: 1.4rem;
+      font-weight: bold;
+      letter-spacing: 0.4em;
+      text-align: center;
+      width: 220px;
+      color: #111;
+      outline: none;
+      padding: 0.3rem 0;
+      caret-color: #111;
+      text-transform: uppercase;
+      -webkit-user-select: auto;
+      user-select: auto;
+      transition: border-color 0.2s;
+    }
+
+    #answer::placeholder {
+      color: #ddd;
+      letter-spacing: 0.25em;
+      font-size: 1rem;
+    }
+
+    #answer.correct {
+      color: #5cb85c;
+      border-color: #5cb85c;
+    }
+  </style>
+</head>
+<body>
+  <span class="badge">42</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+
+  <p id="clue">You can't read this alone.</p>
+
+  <div id="qr-wrap">
+    <div id="qr"></div>
+  </div>
+
+  <input id="answer" type="text" maxlength="6"
+         autocomplete="off" autocorrect="off"
+         autocapitalize="characters" spellcheck="false"
+         placeholder="······">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var TARGET = 'SIGNAL';
+    var solved = false;
+
+    // Generate QR code encoding the answer word
+    new QRCode(document.getElementById('qr'), {
+      text:           'SIGNAL',
+      width:          220,
+      height:         220,
+      colorDark:      '#111111',
+      colorLight:     '#ffffff',
+      correctLevel:   QRCode.CorrectLevel.H
+    });
+
+    var input = document.getElementById('answer');
+
+    input.addEventListener('input', function() {
+      if (solved) return;
+      var val = this.value.toUpperCase().replace(/[^A-Z]/g, '');
+      this.value = val;
+
+      if (val === TARGET) {
+        solved = true;
+        this.classList.add('correct');
+        this.disabled = true;
+        vibrate([20, 40, 20]);
+
+        setTimeout(function() { completeLevel('../sequence/', 12); }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>

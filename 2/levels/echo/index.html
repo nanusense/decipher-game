@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>DECIPHER 2</title>
+  <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #09090e; overflow: hidden; }
+    canvas {
+      position: fixed; inset: 0;
+      touch-action: none; display: block;
+    }
+    .home-link { z-index: 20; color: rgba(255,255,255,0.1); }
+  </style>
+</head>
+<body>
+  <span class="badge">36</span>
+  <a href="../../index.html" class="home-link">HOME</a>
+  <canvas id="c"></canvas>
+
+  <script src="../../utils2.js"></script>
+  <script>
+    desktopBlock();
+
+    var canvas = document.getElementById('c');
+    var ctx    = canvas.getContext('2d');
+    var W, H;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // ── Config ──
+    var NUM_MOSQ   = 6;
+    var TORCH_R    = 95;    // torch beam radius
+    var GLOW_MS    = 950;   // how long mosquito stays visible after torch leaves
+    var CATCH_R    = 44;    // swat tap tolerance
+    var MOSQ_SPEED = 0.85;
+
+    // ── State ──
+    var mosquitoes = [];
+    var splats     = [];
+    var particles  = [];
+    var stars      = [];
+    var completed  = false;
+    var looping    = true;
+    var audioCtx   = null;
+
+    // Torch
+    var torchX      = 0;
+    var torchY      = 0;
+    var torchActive = false;
+    var torchAlpha  = 0;
+
+    // Hum
+    var humStarted = false;
+    var humGain    = null;
+    var humNodes   = [];
+
+    // ── Stars ──
+    for (var i = 0; i < 50; i++) {
+      stars.push({
+        x: Math.random(), y: Math.random(),
+        r: 0.3 + Math.random() * 0.8,
+        a: 0.05 + Math.random() * 0.14
+      });
+    }
+
+    // ── Make mosquito ──
+    function makeMosquito() {
+      var margin = 70;
+      return {
+        x:           margin + Math.random() * (W - margin * 2),
+        y:           margin + Math.random() * (H - margin * 2),
+        angle:       Math.random() * Math.PI * 2,
+        wobble:      Math.random() * Math.PI * 2,
+        speed:       MOSQ_SPEED,
+        changeTimer: 20 + Math.floor(Math.random() * 60),
+        dartTimer:   0,
+        wingPhase:   Math.random() * Math.PI * 2,
+        killed:      false,
+        glowStart:   0,
+        glowUntil:   0,
+        buzzed:      false   // so buzz sound only fires once per illuminate
+      };
+    }
+
+    function initMosquitoes() {
+      mosquitoes = [];
+      for (var i = 0; i < NUM_MOSQ; i++) {
+        var m, tries = 0;
+        do {
+          m = makeMosquito(); tries++;
+          var ok = true;
+          for (var j = 0; j < mosquitoes.length; j++) {
+            var dx = mosquitoes[j].x - m.x, dy = mosquitoes[j].y - m.y;
+            if (Math.sqrt(dx*dx+dy*dy) < 90) { ok = false; break; }
+          }
+          if (ok) break;
+        } while (tries < 300);
+        mosquitoes.push(m);
+      }
+    }
+    initMosquitoes();
+
+    // ── Movement ──
+    function updateMosquitoes() {
+      var now = Date.now();
+      for (var i = 0; i < mosquitoes.length; i++) {
+        var m = mosquitoes[i];
+        if (m.killed) continue;
+
+        m.wingPhase += 0.45;
+        m.changeTimer--;
+
+        if (m.changeTimer <= 0) {
+          m.angle += (Math.random() - 0.5) * Math.PI * 1.2;
+          m.changeTimer = 25 + Math.floor(Math.random() * 80);
+          if (Math.random() < 0.22) {
+            m.speed     = MOSQ_SPEED * 4.5;
+            m.dartTimer = 12 + Math.floor(Math.random() * 8);
+          }
+        }
+
+        if (m.dartTimer > 0) {
+          m.dartTimer--;
+          if (m.dartTimer === 0) m.speed = MOSQ_SPEED;
+        }
+
+        m.wobble += 0.035;
+        m.angle  += Math.sin(m.wobble) * 0.025 + (Math.random() - 0.5) * 0.018;
+
+        // Flee torch beam
+        if (torchActive && now < m.glowUntil) {
+          var fdx = m.x - torchX, fdy = m.y - torchY;
+          var fd  = Math.sqrt(fdx*fdx + fdy*fdy);
+          if (fd < TORCH_R && fd > 1) {
+            var fleeAngle = Math.atan2(fdy, fdx);
+            m.angle += (fleeAngle - m.angle) * 0.08;
+            m.speed  = MOSQ_SPEED * 3.5;
+          }
+        }
+
+        m.x += Math.cos(m.angle) * m.speed;
+        m.y += Math.sin(m.angle) * m.speed;
+
+        var mg = 38;
+        if (m.x < mg)     { m.x = mg;     m.angle = Math.PI - m.angle + (Math.random()-0.5)*0.5; }
+        if (m.x > W - mg) { m.x = W - mg; m.angle = Math.PI - m.angle + (Math.random()-0.5)*0.5; }
+        if (m.y < mg)     { m.y = mg;     m.angle = -m.angle + (Math.random()-0.5)*0.5; }
+        if (m.y > H - mg) { m.y = H - mg; m.angle = -m.angle + (Math.random()-0.5)*0.5; }
+      }
+    }
+
+    // ── Audio ──
+    function ac() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+    function playBuzz() {
+      try {
+        var a = ac(), o = a.createOscillator(), lf = a.createOscillator(),
+            lg = a.createGain(), g = a.createGain();
+        lf.frequency.value = 110; lg.gain.value = 180; o.frequency.value = 380;
+        lf.connect(lg); lg.connect(o.frequency);
+        o.connect(g); g.connect(a.destination);
+        g.gain.setValueAtTime(0.07, a.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.3);
+        o.start(); lf.start();
+        o.stop(a.currentTime + 0.3); lf.stop(a.currentTime + 0.3);
+      } catch(e) {}
+    }
+    function playSwat() {
+      try {
+        var a = ac();
+        var bufSize = Math.floor(a.sampleRate * 0.09);
+        var buf  = a.createBuffer(1, bufSize, a.sampleRate);
+        var data = buf.getChannelData(0);
+        for (var i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+        var src = a.createBufferSource(); src.buffer = buf;
+        var flt = a.createBiquadFilter(); flt.type = 'bandpass';
+        flt.frequency.value = 900; flt.Q.value = 0.6;
+        var g = a.createGain();
+        g.gain.setValueAtTime(0.85, a.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.09);
+        src.connect(flt); flt.connect(g); g.connect(a.destination);
+        src.start(); src.stop(a.currentTime + 0.1);
+      } catch(e) {}
+    }
+    function startHum() {
+      try {
+        var a = ac();
+        humGain = a.createGain();
+        humGain.gain.setValueAtTime(0, a.currentTime);
+        humGain.gain.linearRampToValueAtTime(0.07, a.currentTime + 1.2);
+        humGain.connect(a.destination);
+        [498, 505].forEach(function(freq) {
+          var osc = a.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = freq;
+          var wobLFO = a.createOscillator(), wobGain = a.createGain();
+          wobLFO.frequency.value = 3 + Math.random() * 2; wobGain.gain.value = 6;
+          wobLFO.connect(wobGain); wobGain.connect(osc.frequency);
+          var amLFO = a.createOscillator(), amGain = a.createGain(), amBase = a.createGain();
+          amLFO.frequency.value = 300; amGain.gain.value = 0.35; amBase.gain.value = 0.65;
+          amLFO.connect(amGain);
+          var merger = a.createGain();
+          osc.connect(merger); amGain.connect(merger.gain); amBase.connect(merger.gain);
+          var lpf = a.createBiquadFilter(); lpf.type = 'lowpass';
+          lpf.frequency.value = 1800; lpf.Q.value = 0.7;
+          merger.connect(lpf); lpf.connect(humGain);
+          osc.start(); wobLFO.start(); amLFO.start();
+          humNodes.push(osc, wobLFO, amLFO);
+        });
+      } catch(e) {}
+    }
+    function setHumVolume(v) {
+      if (!humGain) return;
+      try { humGain.gain.setTargetAtTime(v, ac().currentTime, 0.4); } catch(e) {}
+    }
+    function stopHum() {
+      try {
+        humGain.gain.setTargetAtTime(0, ac().currentTime, 0.5);
+        setTimeout(function() {
+          humNodes.forEach(function(n) { try { n.stop(); } catch(e) {} });
+        }, 1800);
+      } catch(e) {}
+    }
+
+    // ── Particles ──
+    function spawnBloodParticles(x, y) {
+      for (var i = 0; i < 10; i++) {
+        var ang = -Math.PI * 0.5 + (Math.random() - 0.5) * Math.PI * 1.4;
+        var spd = 2.5 + Math.random() * 4;
+        particles.push({
+          x: x, y: y,
+          vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 1,
+          r: 1.5 + Math.random() * 2.5, a: 1
+        });
+      }
+    }
+
+    // ── Draw mosquito ──
+    function drawMosquito(x, y, angle, wingPhase, alpha) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle - Math.PI * 0.5);
+      ctx.globalAlpha = alpha;
+      var gClr = '#b8ffb0';
+      ctx.shadowColor = '#80ff60'; ctx.shadowBlur = 18;
+      ctx.fillStyle = gClr; ctx.strokeStyle = gClr;
+      ctx.lineWidth = 0.9;
+      ctx.beginPath(); ctx.moveTo(0, -10);
+      ctx.bezierCurveTo(0.5, -16, -0.5, -20, 0, -26); ctx.stroke();
+      ctx.shadowBlur = 14;
+      ctx.beginPath(); ctx.arc(0, -8, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = 0.7; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.moveTo(-2, -10);
+      ctx.bezierCurveTo(-5, -15, -10, -14, -8, -10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(2, -10);
+      ctx.bezierCurveTo(5, -15, 10, -14, 8, -10); ctx.stroke();
+      ctx.shadowBlur = 14;
+      ctx.beginPath(); ctx.ellipse(0, -2, 4, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+      var wFlap = Math.sin(wingPhase) * 0.25;
+      ctx.shadowBlur = 8; ctx.globalAlpha = alpha * 0.55;
+      ctx.save(); ctx.rotate(-wFlap - 0.2);
+      ctx.beginPath(); ctx.ellipse(-10, -4, 11, 4, -0.35, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.rotate(wFlap + 0.2);
+      ctx.beginPath(); ctx.ellipse(10, -4, 11, 4, 0.35, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.rotate(-wFlap - 0.1);
+      ctx.beginPath(); ctx.ellipse(-7, 1, 6.5, 2.5, -0.2, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.rotate(wFlap + 0.1);
+      ctx.beginPath(); ctx.ellipse(7, 1, 6.5, 2.5, 0.2, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      ctx.globalAlpha = alpha; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.ellipse(0, 10, 3.2, 10, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(0,30,0,0.45)'; ctx.lineWidth = 0.6;
+      for (var s = 0; s < 4; s++) {
+        var sy = 3 + s * 4.5;
+        var hw = 3.2 * Math.sqrt(1 - Math.pow((sy - 10) / 10, 2));
+        ctx.beginPath(); ctx.moveTo(-hw, sy); ctx.lineTo(hw, sy); ctx.stroke();
+      }
+      ctx.fillStyle = gClr; ctx.shadowColor = '#80ff60'; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.moveTo(-1.5, 19); ctx.lineTo(0, 23); ctx.lineTo(1.5, 19); ctx.fill();
+      ctx.strokeStyle = gClr; ctx.shadowBlur = 4; ctx.lineWidth = 0.75;
+      var legY = [-4, 0, 4];
+      for (var li = 0; li < 3; li++) {
+        var ly = legY[li];
+        ctx.beginPath(); ctx.moveTo(-3.5, ly);
+        ctx.bezierCurveTo(-9, ly+1, -13, ly+6, -11, ly+13); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(3.5, ly);
+        ctx.bezierCurveTo(9, ly+1, 13, ly+6, 11, ly+13); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Draw splat ──
+    function drawSplat(s) {
+      ctx.save();
+      ctx.translate(s.x, s.y); ctx.rotate(s.rot);
+      ctx.globalAlpha = 0.82 * s.scale;
+      ctx.fillStyle = '#6b0000'; ctx.shadowColor = '#3a0000'; ctx.shadowBlur = 4;
+      ctx.beginPath(); ctx.ellipse(0, 0, 7 * s.scale, 5 * s.scale, 0, 0, Math.PI * 2); ctx.fill();
+      for (var i = 0; i < s.drops.length; i++) {
+        var d = s.drops[i];
+        ctx.beginPath(); ctx.arc(d.x * s.scale, d.y * s.scale, d.r * s.scale, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function addSplat(x, y) {
+      var drops = [];
+      for (var i = 0; i < 6 + Math.floor(Math.random() * 5); i++) {
+        var ang = Math.random() * Math.PI * 2, dst = 8 + Math.random() * 14;
+        drops.push({ x: Math.cos(ang)*dst, y: Math.sin(ang)*dst, r: 1 + Math.random()*2.5 });
+      }
+      splats.push({ x: x, y: y, rot: Math.random() * Math.PI, drops: drops, scale: 0.1 });
+    }
+
+    // ── Touch ──
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (completed) return;
+      if (!humStarted) { humStarted = true; startHum(); }
+
+      var now = Date.now();
+      var touch = e.changedTouches[0];
+      var tx = touch.clientX, ty = touch.clientY;
+
+      // Try to swat a visible (glowing) mosquito
+      for (var i = 0; i < mosquitoes.length; i++) {
+        var m = mosquitoes[i];
+        if (m.killed || now >= m.glowUntil) continue;
+        var dx = m.x - tx, dy = m.y - ty;
+        if (Math.sqrt(dx*dx + dy*dy) < CATCH_R) {
+          m.killed = true;
+          addSplat(m.x, m.y);
+          spawnBloodParticles(m.x, m.y);
+          playSwat();
+          vibrate([12, 0, 8]);
+          var alive = mosquitoes.filter(function(mm) { return !mm.killed; }).length;
+          setHumVolume(0.07 * (alive / NUM_MOSQ));
+          if (alive === 0) setTimeout(onComplete, 900);
+          return; // don't activate torch on a swat
+        }
+      }
+
+      // No swat — activate torch
+      torchX = tx; torchY = ty;
+      torchActive = true;
+      torchAlpha  = 1;
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (completed || !torchActive) return;
+      var touch = e.changedTouches[0];
+      torchX = touch.clientX;
+      torchY = touch.clientY;
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      torchActive = false; // alpha fades out in render loop
+    }, { passive: false });
+
+    canvas.addEventListener('touchcancel', function(e) {
+      torchActive = false;
+    }, { passive: false });
+
+    // ── Render loop ──
+    function loop() {
+      if (!looping) return;
+      requestAnimationFrame(loop);
+
+      var now = Date.now();
+      updateMosquitoes();
+
+      // Illuminate mosquitoes inside torch beam
+      if (torchActive) {
+        for (var i = 0; i < mosquitoes.length; i++) {
+          var m = mosquitoes[i];
+          if (m.killed) continue;
+          var dx = m.x - torchX, dy = m.y - torchY;
+          if (Math.sqrt(dx*dx + dy*dy) < TORCH_R) {
+            if (now >= m.glowUntil) {
+              m.glowStart = now;
+              m.buzzed    = false;
+            }
+            m.glowUntil = now + GLOW_MS;
+            if (!m.buzzed) { m.buzzed = true; playBuzz(); }
+          } else {
+            m.buzzed = false;
+          }
+        }
+      }
+
+      // Fade torch alpha when lifted
+      if (!torchActive && torchAlpha > 0) {
+        torchAlpha = Math.max(0, torchAlpha - 0.045);
+      }
+
+      // Background
+      ctx.fillStyle = '#09090e';
+      ctx.fillRect(0, 0, W, H);
+
+      // Stars
+      ctx.shadowBlur = 0;
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        ctx.beginPath();
+        ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,' + s.a + ')';
+        ctx.fill();
+      }
+
+      // Splats
+      for (var i = 0; i < splats.length; i++) {
+        var s = splats[i];
+        if (s.scale < 1) s.scale = Math.min(1, s.scale + 0.08);
+        drawSplat(s);
+      }
+
+      // Torch beam — radial gradient, warm yellow-white
+      if (torchAlpha > 0.01) {
+        var grad = ctx.createRadialGradient(torchX, torchY, 0, torchX, torchY, TORCH_R);
+        grad.addColorStop(0,    'rgba(255, 252, 210, ' + (0.28 * torchAlpha) + ')');
+        grad.addColorStop(0.3,  'rgba(255, 248, 195, ' + (0.16 * torchAlpha) + ')');
+        grad.addColorStop(0.65, 'rgba(255, 240, 170, ' + (0.06 * torchAlpha) + ')');
+        grad.addColorStop(1,    'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Sharp bright centre spot
+        var spot = ctx.createRadialGradient(torchX, torchY, 0, torchX, torchY, 18);
+        spot.addColorStop(0,   'rgba(255, 255, 240, ' + (0.18 * torchAlpha) + ')');
+        spot.addColorStop(1,   'rgba(255, 252, 210, 0)');
+        ctx.fillStyle = spot;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      // Mosquitoes
+      for (var i = 0; i < mosquitoes.length; i++) {
+        var m = mosquitoes[i];
+        if (m.killed) continue;
+        if (now < m.glowUntil) {
+          var elapsed   = now - m.glowStart;
+          var remaining = m.glowUntil - now;
+          var mAlpha;
+          if      (elapsed   < 140) mAlpha = elapsed / 140;
+          else if (remaining < 280) mAlpha = remaining / 280;
+          else                      mAlpha = 1;
+          drawMosquito(m.x, m.y, m.angle, m.wingPhase, mAlpha);
+        }
+      }
+
+      // Blood particles
+      for (var i = particles.length - 1; i >= 0; i--) {
+        var p = particles[i];
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.12; p.vx *= 0.94;
+        p.a  -= 0.026;
+        if (p.a <= 0) { particles.splice(i, 1); continue; }
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(160,0,0,' + p.a + ')';
+        ctx.shadowColor = '#600000'; ctx.shadowBlur = 4;
+        ctx.fill(); ctx.shadowBlur = 0;
+      }
+    }
+    loop();
+
+    // ── Win ──
+    function onComplete() {
+      completed = true; looping = false;
+      stopHum();
+      setTimeout(function() {
+        completeLevel('../beyond/', 6);
+      }, 500);
+    }
+  </script>
+</body>
+</html>
