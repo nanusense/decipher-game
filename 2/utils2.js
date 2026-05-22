@@ -263,7 +263,7 @@ function revealText(el, text, msPerLetter, onDone) {
   }
 
   function expand() {
-    el.style.maxWidth = '280px';
+    el.style.maxWidth = '320px';
     expanded = true;
     clearTimeout(hideTimer);
     hideTimer = setTimeout(collapse, 4000);
