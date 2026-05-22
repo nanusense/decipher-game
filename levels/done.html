@@ -281,7 +281,7 @@
 
     <!-- LEADERBOARD -->
     <div class="wall-wrap">
-      <p class="wall-label" id="wallLabel">WALL OF DECIPHERERS</p>
+      <p class="wall-label" id="wallLabel">DECIPHER I</p>
 
       <div class="wall-input-row">
         <input class="wall-input" id="wallName" type="text"
@@ -459,7 +459,7 @@
         container.innerHTML='';
         if(!lines.length||(lines.length===1&&!lines[0])){container.innerHTML='<p class="wall-status">Be the first.</p>';return;}
         var total=lines.length;
-        document.getElementById('wallLabel').textContent='WALL OF DECIPHERERS — '+total+' SOLVED';
+        document.getElementById('wallLabel').textContent='DECIPHER I — '+total+' SOLVERS';
         lines.reverse().forEach(function(line,i){
           var parts=line.split(',');
           var ts=parts[0]?parts[0].replace(/"/g,'').trim():'';
