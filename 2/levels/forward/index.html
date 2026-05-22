@@ -104,15 +104,25 @@
         ctx.fillStyle = '#666';
         ctx.fillText('to move forward.', CX, LINE2_Y);
 
-        // Erase scratched areas with background circles
+        // Erase scratched areas — clipped strictly to IM bounding box
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(
+          imBounds.left  - SCRATCH_R,
+          imBounds.top   - SCRATCH_R,
+          (imBounds.right - imBounds.left) + SCRATCH_R * 2,
+          (imBounds.bottom - imBounds.top) + SCRATCH_R
+        );
+        ctx.clip();
         ctx.fillStyle = BG;
         for (var i = 0; i < scratchPts.length; i++) {
           ctx.beginPath();
           ctx.arc(scratchPts[i].x, scratchPts[i].y, SCRATCH_R, 0, Math.PI * 2);
           ctx.fill();
         }
+        ctx.restore();
 
-        // Redraw line 2 on top so scratch circles can never erase it
+        // Redraw line 2 on top for extra safety
         ctx.fillStyle = '#666';
         ctx.fillText('to move forward.', CX, LINE2_Y);
       }
@@ -120,10 +130,11 @@
 
     // ── Scratch ──
     function doScratch(x, y) {
-      // Only register in and around the IM area
-      var pad = SCRATCH_R + 4;
-      if (x < imBounds.left  - pad || x > imBounds.right  + pad ||
-          y < imBounds.top   - pad || y > imBounds.bottom + pad) return;
+      // Only register in and around the IM area — no padding below to prevent line 2 bleed
+      var padX = SCRATCH_R + 4;
+      var padY = SCRATCH_R + 4;
+      if (x < imBounds.left  - padX || x > imBounds.right  + padX ||
+          y < imBounds.top   - padY || y > imBounds.bottom) return;
 
       scratchPts.push({ x: x, y: y });
 
