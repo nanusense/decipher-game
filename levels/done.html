@@ -203,6 +203,35 @@
       min-height: 1em;
     }
 
+    .d2-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      text-align: center;
+    }
+
+    .d2-text {
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      line-height: 2;
+    }
+
+    .d2-btn {
+      display: inline-block;
+      font-family: var(--font);
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      color: var(--bg);
+      background: var(--text);
+      padding: 0.75rem 2rem;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+    .d2-btn:active { opacity: 0.8; }
+
     .done-footer {
       font-size: 0.7rem;
       letter-spacing: 0.12em;
@@ -266,8 +295,23 @@
       <div class="wall-names" id="wallNames"></div>
     </div>
 
+    <div class="done-divider"></div>
+
+    <div class="d2-wrap">
+      <p class="d2-text">
+        DECIPHER II is now available.<br>
+        20 more levels.<br>
+        Mobile version only.
+      </p>
+      <a class="d2-btn" href="https://decipher.shiftingradius.com/2" target="_blank" rel="noopener">
+        READY?
+      </a>
+    </div>
+
+    <div class="done-divider"></div>
+
     <p class="done-footer" id="shareBtn">
-      More levels coming. Tell a friend.
+      Tell a friend.
       <span class="share-hint">TAP TO SHARE</span>
     </p>
 
