@@ -107,15 +107,15 @@
         this.classList.add('correct');
         this.disabled = true;
 
-        // Ripple each letter to blue, left to right
+        // Ripple each letter to green, left to right
         spans.forEach(function(s, i) {
           setTimeout(function() {
-            s.style.color = '#3a8fc7';
+            s.style.color = '#5cb85c';
           }, i * 60);
         });
 
-        // White fade after letters finish
-        setTimeout(function() { completeLevel('../forward/', 13); }, spans.length * 60 + 700);
+        // Stay green for 3 seconds then fade
+        setTimeout(function() { completeLevel('../forward/', 13); }, spans.length * 60 + 3000);
       }
     });
 
