@@ -111,6 +111,10 @@
           ctx.arc(scratchPts[i].x, scratchPts[i].y, SCRATCH_R, 0, Math.PI * 2);
           ctx.fill();
         }
+
+        // Redraw line 2 on top so scratch circles can never erase it
+        ctx.fillStyle = '#666';
+        ctx.fillText('to move forward.', CX, LINE2_Y);
       }
     }
 
