@@ -229,51 +229,43 @@ function revealText(el, text, msPerLetter, onDone) {
 
 /* ── Support widget (tap to expand) ── */
 (function () {
-  var el = document.createElement('div');
-  el.style.cssText =
+  var heart = document.createElement('div');
+  heart.style.cssText =
     'position:fixed;bottom:0.9rem;right:1rem;z-index:50;' +
     'font-family:Courier New,monospace;font-size:0.75rem;letter-spacing:0.1em;color:#3a3a3a;' +
     'white-space:nowrap;overflow:hidden;max-width:22px;' +
     'padding:0.3rem 0.2rem;' +
     'transition:max-width 0.3s ease;cursor:pointer;' +
     '-webkit-tap-highlight-color:transparent;';
-  el.innerHTML =
-    '<span style="user-select:none;">♥</span>' +
-    '<a href="https://razorpay.me/@sandeepnanu" target="_blank" rel="noopener" ' +
-    'style="color:inherit;text-decoration:none;"> Like it? Support it. No pressure.</a>';
+
+  var link = document.createElement('a');
+  link.href = 'https://razorpay.me/@sandeepnanu';
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.style.cssText = 'color:inherit;text-decoration:none;pointer-events:none;';
+  link.textContent = '♥ Like it? Support it. No pressure.';
+  heart.appendChild(link);
 
   var expanded = false;
   var hideTimer = null;
 
   function collapse() {
-    el.style.maxWidth = '22px';
+    heart.style.maxWidth = '22px';
+    link.style.pointerEvents = 'none';
     expanded = false;
     clearTimeout(hideTimer);
   }
 
-  function outsideTap(e) {
-    if (el.contains(e.target)) {
-      // Tapped inside — re-arm for next tap
-      setTimeout(function () {
-        window.addEventListener('touchstart', outsideTap, { once: true, passive: true });
-      }, 0);
-    } else {
-      collapse();
-    }
-  }
-
   function expand() {
-    el.style.maxWidth = '320px';
+    heart.style.maxWidth = '360px';
     expanded = true;
     clearTimeout(hideTimer);
     hideTimer = setTimeout(collapse, 4000);
-    // Register outside-tap listener after current event finishes
-    setTimeout(function () {
-      window.addEventListener('touchstart', outsideTap, { once: true, passive: true });
-    }, 0);
+    // Enable link clicks after transition
+    setTimeout(function () { link.style.pointerEvents = 'auto'; }, 320);
   }
 
-  el.addEventListener('touchstart', function (e) {
+  heart.addEventListener('touchstart', function (e) {
     if (!expanded) {
       e.preventDefault();
       expand();
@@ -281,10 +273,6 @@ function revealText(el, text, msPerLetter, onDone) {
   }, { passive: false });
 
   document.addEventListener('DOMContentLoaded', function () {
-    if (!window.hideSupport) document.body.appendChild(el);
-  });
-
-  document.addEventListener('DOMContentLoaded', function () {
-    if (!window.hideSupport) document.body.appendChild(el);
+    if (!window.hideSupport) document.body.appendChild(heart);
   });
 })();
